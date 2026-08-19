@@ -11,13 +11,14 @@ export default async function GradingPage() {
     .sort((a,b) => Number(b.rawMid || 0) - Number(a.rawMid || 0));
   const ready = queue.filter((c) => c.gradingStatus === "ready_for_grading");
   const graded = queue.filter((c) => c.gradingStatus === "graded");
+  const gradingResults = queue.filter((c) => Boolean(c.likelyGradeLabel));
   return (
     <div className="page">
       <div className="page-head"><div><h1 className="page-title">Grading queue</h1><p className="page-sub">Upload media first, mark cards ready, then ask ChatGPT to grade the ready batch through MCP.</p></div><span className="badge good">{ready.length} ready</span></div>
       <div style={{marginBottom:16}}><GradingBatchSelector cards={ready} /></div>
       <div className="grid metrics">
         <div className="metric"><div className="metric-label">Ready</div><div className="metric-value">{ready.length}</div><div className="metric-detail">MCP can retrieve these immediately</div></div>
-        <div className="metric"><div className="metric-label">Graded</div><div className="metric-value">{graded.length}</div><div className="metric-detail">Stored grading runs</div></div>
+        <div className="metric"><div className="metric-label">Grading results</div><div className="metric-value">{gradingResults.length}</div><div className="metric-detail">{graded.length} graded; the remainder retain other workflow decisions</div></div>
         <div className="metric"><div className="metric-label">Needs photos</div><div className="metric-value">{queue.filter(c=>["needs_photos","needs_more_photos"].includes(c.gradingStatus)).length}</div><div className="metric-detail">Media package incomplete</div></div>
         <div className="metric"><div className="metric-label">Queue value</div><div className="metric-value">{money(queue.reduce((s,c)=>s+Number(c.rawMid||0),0))}</div><div className="metric-detail">Raw midpoint</div></div>
       </div>

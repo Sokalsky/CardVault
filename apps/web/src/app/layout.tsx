@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   description: "Pokémon card collection, grading, media and PSA submission workflow",
 };
 
+// Railway injects database credentials at container runtime, not during the
+// Docker build. Keep collection pages dynamic so they never bake in demo data.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const demo = isDemoMode();
   return (
