@@ -14,6 +14,7 @@ const RESOURCE_URL = new URL("/mcp", PUBLIC_URL);
 const BIND_HOST = AUTH_MODE === "oauth" ? "0.0.0.0" : "127.0.0.1";
 const ALLOWED_HOSTS = [...new Set([
   PUBLIC_URL.hostname,
+  "healthcheck.railway.app",
   "localhost",
   "127.0.0.1",
   process.env.RAILWAY_PRIVATE_DOMAIN,
