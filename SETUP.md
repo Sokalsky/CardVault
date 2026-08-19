@@ -44,6 +44,7 @@ Copy `apps/web/.env.example` to `apps/web/.env.local`, and set:
 ```text
 DATABASE_URL                 Supabase PostgreSQL connection string
 SUPABASE_URL                 Project URL used only by server code
+SUPABASE_PUBLISHABLE_KEY     Safe key returned only with path-scoped signed upload data
 SUPABASE_SERVICE_ROLE_KEY    Service-role key used only by server code
 MEDIA_BUCKET                 grading-media
 NEXT_PUBLIC_APP_URL          http://localhost:3000

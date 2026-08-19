@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { mediaAssets, physicalCards } from "@/db/schema";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { webAuthorized } from "@/lib/web-auth";
@@ -28,6 +28,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!db || !supabase) return NextResponse.json({ error: "Database/storage not configured." }, { status: 503 });
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) return NextResponse.json({ error: "Storage URL is not configured." }, { status: 503 });
+  const publicStorageKey = process.env.SUPABASE_PUBLISHABLE_KEY
+    || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!publicStorageKey) return NextResponse.json({ error: "Storage publishable key is not configured." }, { status: 503 });
   const { id } = await params;
   const parsed = bodySchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -42,21 +46,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!card) return NextResponse.json({ error: "Physical card not found." }, { status: 404 });
   const bucket = process.env.MEDIA_BUCKET || "grading-media";
   const folder = body.kind === "video" ? "videos" : "photos";
-  const path = `cards/${id}/${folder}/${crypto.randomUUID()}-${clean(body.filename)}`;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
+  const matches = await db.select().from(mediaAssets).where(and(
+    eq(mediaAssets.physicalCardId, id),
+    eq(mediaAssets.originalFilename, body.filename),
+    eq(mediaAssets.byteSize, body.byteSize),
+    eq(mediaAssets.kind, body.kind),
+    eq(mediaAssets.captureType, body.captureType),
+  ));
+  const completed = matches.find((asset) => asset.processingStatus === "ready");
+  if (completed) return NextResponse.json({ alreadyUploaded: true, mediaAssetId: completed.id });
+
+  const reusable = matches[0];
+  const path = reusable?.storagePath || `cards/${id}/${folder}/${crypto.randomUUID()}-${clean(body.filename)}`;
+  const upsert = Boolean(reusable);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path, { upsert });
   if (error || !data) return NextResponse.json({ error: error?.message || "Unable to sign upload." }, { status: 500 });
-  const [asset] = await db.insert(mediaAssets).values({
-    physicalCardId: id,
-    kind: body.kind,
-    captureType: body.captureType,
-    storagePath: path,
-    originalFilename: body.filename,
-    mimeType: body.contentType,
-    byteSize: body.byteSize,
-    processingStatus: "uploading",
-    selectedForGrading: body.kind !== "video",
-  }).returning({ id: mediaAssets.id });
+  const [asset] = reusable
+    ? await db.update(mediaAssets).set({ processingStatus: "uploading", mimeType: body.contentType }).where(eq(mediaAssets.id, reusable.id)).returning({ id: mediaAssets.id })
+    : await db.insert(mediaAssets).values({
+      physicalCardId: id,
+      kind: body.kind,
+      captureType: body.captureType,
+      storagePath: path,
+      originalFilename: body.filename,
+      mimeType: body.contentType,
+      byteSize: body.byteSize,
+      processingStatus: "uploading",
+      selectedForGrading: body.kind !== "video",
+    }).returning({ id: mediaAssets.id });
   const projectId = new URL(supabaseUrl).hostname.split(".")[0];
   const tusEndpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
-  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint });
+  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint, publicStorageKey, upsert });
 }

@@ -124,7 +124,7 @@ export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
       captureType: m.captureType,
       mimeType: m.mimeType,
       storagePath: m.storagePath,
-      selectedForGrading: m.selectedForGrading,
+      selectedForGrading: m.selectedForGrading && m.processingStatus === "ready",
       processingStatus: m.processingStatus,
     })),
     ...frames.map((f) => ({

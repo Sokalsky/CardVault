@@ -6,6 +6,16 @@ import { Images, Video } from "lucide-react";
 import { inferredCaptureType } from "@/lib/media-capture";
 import { mediaFileInfo } from "@/lib/media-file";
 
+type TusFailure = Error & { originalResponse?: { getBody?: () => string; getStatus?: () => number } };
+
+function failureMessage(error: unknown) {
+  if (!(error instanceof Error)) return "Unknown upload error";
+  const tusError = error as TusFailure;
+  const responseBody = tusError.originalResponse?.getBody?.();
+  const responseStatus = tusError.originalResponse?.getStatus?.();
+  return [error.message, responseStatus ? `HTTP ${responseStatus}` : "", responseBody || ""].filter(Boolean).join(" — ");
+}
+
 export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -22,16 +32,24 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
     });
     if (!response.ok) throw new Error(await response.text());
     const data = await response.json();
+    if (data.alreadyUploaded) {
+      setMessage(`Already saved ${position} of ${total}: ${file.name}`);
+      return;
+    }
+    const mediaAssetId = String(data.mediaAssetId || "");
     const signedUrl = String(data.signedUrl || "");
     const tusEndpoint = String(data.tusEndpoint || "");
-    if (!signedUrl || !tusEndpoint) throw new Error("The server did not provide a signed storage destination.");
+    const publicStorageKey = String(data.publicStorageKey || "");
+    if (!mediaAssetId || !signedUrl || !tusEndpoint || !publicStorageKey) throw new Error("The server did not provide a complete signed storage destination.");
 
-    if (kind === "video" || file.size > 6 * 1024 * 1024) {
+    let stage = "storage upload";
+    try {
+      if (kind === "video" || file.size > 6 * 1024 * 1024) {
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(file, {
           endpoint: tusEndpoint,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { "x-signature": data.token },
+          headers: { apikey: publicStorageKey, "x-signature": data.token, "x-upsert": String(Boolean(data.upsert)) },
           uploadDataDuringCreation: true,
           removeFingerprintOnSuccess: true,
           metadata: {
@@ -52,22 +70,32 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
           })
           .catch(() => upload.start());
       });
-    } else {
-      setMessage(`Uploading ${position} of ${total}: ${file.name}`);
-      const body = new FormData();
-      body.append("cacheControl", "3600");
-      body.append("", file.type ? file : new File([file], file.name, { type: contentType, lastModified: file.lastModified }));
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        headers: { "x-upsert": "false" },
-        body,
-      });
-      if (!uploadResponse.ok) throw new Error(await uploadResponse.text());
-    }
+      } else {
+        setMessage(`Uploading ${position} of ${total}: ${file.name}`);
+        const body = new FormData();
+        body.append("cacheControl", "3600");
+        body.append("", file.type ? file : new File([file], file.name, { type: contentType, lastModified: file.lastModified }));
+        const uploadResponse = await fetch(signedUrl, {
+          method: "PUT",
+          headers: { apikey: publicStorageKey, "x-upsert": String(Boolean(data.upsert)) },
+          body,
+        });
+        if (!uploadResponse.ok) throw new Error(`${uploadResponse.status} ${await uploadResponse.text()}`);
+      }
 
-    setMessage(kind === "video" ? `Processing video ${position} of ${total}…` : `Saving photo ${position} of ${total}…`);
-    const complete = await fetch(`/api/media/${data.mediaAssetId}/complete`, { method: "POST" });
-    if (!complete.ok) throw new Error(await complete.text());
+      stage = kind === "video" ? "video processing" : "photo completion";
+      setMessage(kind === "video" ? `Processing video ${position} of ${total}…` : `Saving photo ${position} of ${total}…`);
+      const complete = await fetch(`/api/media/${mediaAssetId}/complete`, { method: "POST" });
+      if (!complete.ok) throw new Error(`${complete.status} ${await complete.text()}`);
+    } catch (error) {
+      const reason = failureMessage(error);
+      await fetch(`/api/media/${mediaAssetId}/failed`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ stage, error: reason.slice(0, 2000) }),
+      }).catch(() => undefined);
+      throw new Error(`${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB) failed during ${stage}: ${reason}`);
+    }
   }
 
   async function uploadAll(selected: FileList) {
