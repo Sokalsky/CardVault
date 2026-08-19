@@ -32,6 +32,7 @@ Apply migrations in order using the Supabase SQL Editor, or with `psql`:
 ```powershell
 psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/0001_init.sql
 psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/0002_production_hardening.sql
+psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/0003_supabase_service_role.sql
 ```
 
 The migration creates a private `grading-media` bucket, enables RLS on collection tables, and intentionally defines no anonymous table policies. Browser uploads use short-lived server-generated signed URLs; server operations use the service role.

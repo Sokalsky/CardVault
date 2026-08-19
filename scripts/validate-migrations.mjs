@@ -7,6 +7,7 @@ const directory = path.resolve("database");
 const files = (await fs.readdir(directory)).filter((file) => /^\d+.*\.sql$/.test(file)).sort();
 assert.ok(files.length >= 2, "Expected ordered SQL migrations");
 const database = new PGlite();
+await database.exec("create role service_role nologin");
 
 for (const file of files) {
   const sql = await fs.readFile(path.join(directory, file), "utf8");
@@ -46,5 +47,13 @@ await assert.rejects(
 
 const rls = await database.query("select relname, relrowsecurity from pg_class where relname = any($1)", [expectedTables]);
 assert.ok(rls.rows.every((row) => row.relrowsecurity), "Every collection table must have RLS enabled for Supabase REST");
+const serviceRoleAccess = await database.query(
+  "select has_schema_privilege('service_role', 'public', 'usage') as schema_usage, has_table_privilege('service_role', 'physical_cards', 'select') as card_select, has_table_privilege('service_role', 'media_assets', 'insert') as media_insert",
+);
+assert.deepEqual(
+  serviceRoleAccess.rows[0],
+  { schema_usage: true, card_select: true, media_insert: true },
+  "Supabase service_role must be able to read cards and persist media",
+);
 await database.close();
-console.log(`validated ${files.length} migrations, ${expectedTables.length} tables, RLS, copy separation, and submission constraints`);
+console.log(`validated ${files.length} migrations, ${expectedTables.length} tables, RLS, service-role access, copy separation, and submission constraints`);

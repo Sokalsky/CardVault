@@ -4,7 +4,7 @@ CardVault uses one Supabase project and three Railway services sourced from `mai
 
 ## 1. Supabase
 
-Create the project, then apply `database/0001_init.sql` and `database/0002_production_hardening.sql` in that order with `psql` and `ON_ERROR_STOP`, as shown in [SETUP.md](SETUP.md). These migrations are additive; neither drops collection data. Do not re-create tables manually in the dashboard.
+Create the project, then apply `database/0001_init.sql`, `database/0002_production_hardening.sql`, and `database/0003_supabase_service_role.sql` in that order with `psql` and `ON_ERROR_STOP`, as shown in [SETUP.md](SETUP.md). These migrations are additive; none drops collection data. Do not re-create tables manually in the dashboard.
 
 Before a schema change against populated production data:
 

@@ -7,7 +7,7 @@ Status date: 2026-08-18. “Working” means exercised locally in this repositor
 - Next.js production build, TypeScript, ESLint, unit tests, dependency audit, and authenticated HTTP page smoke tests.
 - Responsive dashboard, collection search/filtering, physical-card detail, media upload/selection, grading queues/batch prompt preparation, gross-EV PSA submission candidates, and atomic exact-copy draft batch creation.
 - Read-only local fallback containing all 860 preserved physical cards; write actions fail closed until Supabase is configured.
-- Two additive migrations validated by applying them to an embedded PostgreSQL-compatible database; 10 required tables, RLS, constraints, triggers, indexes, private storage bucket setup, and separate-copy behavior checked.
+- Three additive migrations validated by applying them to an embedded PostgreSQL-compatible database; 10 required tables, RLS, service-role access, constraints, triggers, indexes, private storage bucket setup, and separate-copy behavior checked.
 - Idempotent seed/import logic for 860 cards and 18 historical grading runs. Original workbook identities/prices match canonical JSON for every record.
 - Photo importer supports the real three-level archive paths, validates checksums/size, maps exact copies, and generates idempotent UUID-scoped private storage paths. Mapping tests pass.
 - Video worker dependencies/imports, scoring unit tests, Python compilation, real FFmpeg extraction, and live health endpoint. Dockerfile installs FFmpeg and image libraries.
