@@ -1,6 +1,8 @@
+import { mediaFileInfo } from "@/lib/media-file";
+
 export function inferredCaptureType(file: { name: string; type: string }, photoIndex: number) {
   const name = file.name.toLowerCase();
-  const isVideo = file.type.startsWith("video/");
+  const { isVideo } = mediaFileInfo(file);
   if (/center|centering/.test(name) && !isVideo) return "centering";
   if (/defect|damage|scratch|crease/.test(name)) return "defect_macro";
   if (/corner/.test(name)) return "corner_macro";

@@ -13,13 +13,18 @@ const activeLegacyIds = new Set(collection.cards.map((card) => card.masterId));
 
 type ListCardsOptions = { includeThumbnails?: boolean };
 
+const production = process.env.NODE_ENV === "production";
+
 export function isDemoMode() {
   return !process.env.DATABASE_URL;
 }
 
 export async function listCards(options: ListCardsOptions = {}): Promise<CardListItem[]> {
   const db = getDb();
-  if (!db) return demoListCards();
+  if (!db) {
+    if (production) throw new Error("CardVault requires DATABASE_URL in production.");
+    return demoListCards();
+  }
 
   try {
   const rows = await db
@@ -96,7 +101,8 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     thumbnailSource: signedFronts.has(row.id) ? "grading" as const : referenceImages[String(row.legacyMasterId)] ? "reference" as const : null,
   }));
   } catch (error) {
-    console.error("Database read failed; serving the preserved read-only collection.", error);
+    if (production) throw error;
+    console.error("Development database read failed; serving the preserved read-only collection.", error);
     return demoListCards();
   }
 }
@@ -163,7 +169,11 @@ export async function getValuationHistory(cardId: string) {
 
 export async function getCard(id: string): Promise<CardDetail | null> {
   const db = getDb();
-  if (!db || id.startsWith("legacy-")) return demoGetCard(id);
+  if (!db) {
+    if (production) throw new Error("CardVault requires DATABASE_URL in production.");
+    return demoGetCard(id);
+  }
+  if (id.startsWith("legacy-")) return production ? null : demoGetCard(id);
 
   const [row] = await db
     .select({

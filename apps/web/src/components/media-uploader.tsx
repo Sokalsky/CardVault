@@ -1,44 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import * as tus from "tus-js-client";
 import { Images, Video } from "lucide-react";
 import { inferredCaptureType } from "@/lib/media-capture";
+import { mediaFileInfo } from "@/lib/media-file";
 
 export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
   async function uploadOne(file: File, captureType: string, position: number, total: number) {
-    const kind = file.type.startsWith("video/") ? "video" : captureType === "centering" ? "centering" : "image";
+    const { contentType, isVideo } = mediaFileInfo(file);
+    if (!contentType) throw new Error(`${file.name} is not a supported photo or video.`);
+    const kind = isVideo ? "video" : captureType === "centering" ? "centering" : "image";
     setMessage(`Preparing ${position} of ${total}: ${file.name}`);
     const response = await fetch(`/api/cards/${cardId}/media/sign-upload`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ filename: file.name, contentType: file.type, byteSize: file.size, kind, captureType }),
+      body: JSON.stringify({ filename: file.name, contentType, byteSize: file.size, kind, captureType }),
     });
     if (!response.ok) throw new Error(await response.text());
     const data = await response.json();
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) throw new Error("Missing public Supabase environment variables.");
-    const supabase = createClient(url, anon);
+    const signedUrl = String(data.signedUrl || "");
+    const tusEndpoint = String(data.tusEndpoint || "");
+    if (!signedUrl || !tusEndpoint) throw new Error("The server did not provide a signed storage destination.");
 
     if (kind === "video" || file.size > 6 * 1024 * 1024) {
-      const projectId = new URL(url).hostname.split(".")[0];
-      const endpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(file, {
-          endpoint,
+          endpoint: tusEndpoint,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { authorization: `Bearer ${anon}`, "x-signature": data.token },
+          headers: { "x-signature": data.token },
           uploadDataDuringCreation: true,
           removeFingerprintOnSuccess: true,
           metadata: {
             bucketName: data.bucket,
             objectName: data.path,
-            contentType: file.type || "application/octet-stream",
+            contentType,
             cacheControl: "3600",
           },
           chunkSize: 6 * 1024 * 1024,
@@ -46,17 +45,24 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
           onProgress: (sent, bytes) => setMessage(`Uploading ${position} of ${total}: ${Math.round((sent / bytes) * 100)}%`),
           onSuccess: () => resolve(),
         });
-        void upload.findPreviousUploads().then((previous) => {
-          if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
-          upload.start();
-        });
+        void upload.findPreviousUploads()
+          .then((previous) => {
+            if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
+            upload.start();
+          })
+          .catch(() => upload.start());
       });
     } else {
       setMessage(`Uploading ${position} of ${total}: ${file.name}`);
-      const { error } = await supabase.storage.from(data.bucket).uploadToSignedUrl(data.path, data.token, file, {
-        contentType: file.type,
+      const body = new FormData();
+      body.append("cacheControl", "3600");
+      body.append("", file.type ? file : new File([file], file.name, { type: contentType, lastModified: file.lastModified }));
+      const uploadResponse = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "x-upsert": "false" },
+        body,
       });
-      if (error) throw error;
+      if (!uploadResponse.ok) throw new Error(await uploadResponse.text());
     }
 
     setMessage(kind === "video" ? `Processing video ${position} of ${total}…` : `Saving photo ${position} of ${total}…`);
@@ -72,7 +78,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
       setMessage("Choose no more than 40 files for one card.");
       return;
     }
-    if (files.filter((file) => !file.type.startsWith("video/")).length < 2) {
+    if (files.filter((file) => !mediaFileInfo(file).isVideo).length < 2) {
       setMessage("Include at least a front photo and a back photo in the batch.");
       return;
     }
@@ -82,7 +88,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
     try {
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
-        const currentPhotoIndex = file.type.startsWith("video/") ? -1 : photoIndex++;
+        const currentPhotoIndex = mediaFileInfo(file).isVideo ? -1 : photoIndex++;
         await uploadOne(file, inferredCaptureType(file, currentPhotoIndex), index + 1, files.length);
       }
       setMessage("Uploads complete. Sending this card to the grading queue…");
@@ -107,7 +113,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
         <Images size={17} /> {busy ? "Uploading and processing…" : "Choose all photos & videos"}
         <input
           type="file"
-          accept="image/*,video/*"
+          accept="image/*,video/*,.heic,.heif,.mov,.m4v"
           multiple
           hidden
           disabled={disabled || busy}

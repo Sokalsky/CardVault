@@ -43,8 +43,6 @@ Copy `apps/web/.env.example` to `apps/web/.env.local`, and set:
 
 ```text
 DATABASE_URL                 Supabase PostgreSQL connection string
-NEXT_PUBLIC_SUPABASE_URL     Project URL; safe browser identifier
-NEXT_PUBLIC_SUPABASE_ANON_KEY Project anon key
 SUPABASE_URL                 Project URL used only by server code
 SUPABASE_SERVICE_ROLE_KEY    Service-role key used only by server code
 MEDIA_BUCKET                 grading-media

@@ -5,7 +5,7 @@
 - `seed/source/collection-v25.xlsx`: reconciled source workbook.
 - `seed/collection.json`: canonical normalized import, 821 active physical cards.
 - `seed/retired-v25.json`: 39 retired duplicate/snapshot rows retained for audit and history preservation.
-- `apps/web/src/data/collection.json`: byte-identical read-only application fallback.
+- `apps/web/src/data/collection.json`: byte-identical local-development/import-validation seed; production reads Supabase and fails closed if it is unavailable.
 - `seed/source/photos-manifest.csv`: 142 archived image entries with checksums.
 - `seed/photos-map.json`: archive folder-to-legacy-card mapping for 16 exact physical copies.
 

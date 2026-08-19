@@ -6,7 +6,7 @@ The repository preserves the reconciled collection: 821 active physical cards, 3
 
 ## Architecture
 
-- `apps/web`: Next.js 16/TypeScript web application, server APIs, responsive collection/media/grading/submission screens, one-pick mixed photo/video upload, and read-only collection fallback when a database is unavailable.
+- `apps/web`: Next.js 16/TypeScript web application, server APIs, responsive collection/media/grading/submission screens, one-pick mixed photo/video upload, and a read-only seed used only for local development/import validation.
 - `database`: reproducible additive PostgreSQL/Supabase migrations. Row-level security is enabled and the media bucket is private.
 - `services/video-worker`: Python/FastAPI worker using FFmpeg, OpenCV, exposure scoring, perceptual-hash de-duplication, retained frames, and contact sheets.
 - `services/mcp-server`: authenticated Streamable HTTP MCP service with 12 focused tools for ChatGPT.

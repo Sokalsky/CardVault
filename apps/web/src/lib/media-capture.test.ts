@@ -10,6 +10,7 @@ test("unnamed bulk photos use front then back ordering", () => {
 
 test("descriptive names classify mixed bulk media", () => {
   assert.equal(inferredCaptureType({ name: "front-sweep.mov", type: "video/quicktime" }, -1), "front_surface");
+  assert.equal(inferredCaptureType({ name: "back-sweep.MOV", type: "" }, -1), "back_surface");
   assert.equal(inferredCaptureType({ name: "bottom_edge.mp4", type: "video/mp4" }, -1), "bottom_edge");
   assert.equal(inferredCaptureType({ name: "centering.png", type: "image/png" }, 4), "centering");
 });

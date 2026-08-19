@@ -26,6 +26,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!webAuthorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const db = getDb(); const supabase = getSupabaseAdmin();
   if (!db || !supabase) return NextResponse.json({ error: "Database/storage not configured." }, { status: 503 });
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) return NextResponse.json({ error: "Storage URL is not configured." }, { status: 503 });
   const { id } = await params;
   const parsed = bodySchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -54,5 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     processingStatus: "uploading",
     selectedForGrading: body.kind !== "video",
   }).returning({ id: mediaAssets.id });
-  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token });
+  const projectId = new URL(supabaseUrl).hostname.split(".")[0];
+  const tusEndpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
+  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint });
 }
