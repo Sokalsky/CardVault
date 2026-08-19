@@ -1,0 +1,20 @@
+{
+  "name": "cardvault",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["apps/web", "services/mcp-server"],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:mcp": "npm --workspace services/mcp-server run dev",
+    "build": "npm --workspace apps/web run build && npm --workspace services/mcp-server run build",
+    "typecheck": "npm --workspace apps/web run typecheck && npm --workspace services/mcp-server run typecheck",
+    "lint": "npm --workspace apps/web run lint && npm --workspace services/mcp-server run lint",
+    "test": "npm --workspace apps/web run test && npm --workspace services/mcp-server run test",
+    "validate:migrations": "node scripts/validate-migrations.mjs",
+    "validate:data": "node scripts/validate-data.mjs",
+    "validate:workbook": "python scripts/validate-workbook.py"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.5"
+  }
+}

@@ -1,0 +1,124 @@
+export type PsaGrade = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+export type GradeProbabilityMap = Partial<Record<PsaGrade, number | null>>;
+export type GradeValueMap = Partial<Record<PsaGrade, number | null>>;
+export type GradingStatus = "ungraded" | "needs_photos" | "ready_for_grading" | "grading" | "needs_more_photos" | "graded" | "recheck" | "grade_candidate" | "do_not_grade" | "submitted_to_psa" | "psa_returned";
+
+export type DemoGrading = {
+  tier?: string | null;
+  preGradeEstimate?: string | null;
+  decision?: string | null;
+  centering?: string | null;
+  centeringNotes?: string | null;
+  corners?: string | null;
+  cornersNotes?: string | null;
+  edges?: string | null;
+  edgesNotes?: string | null;
+  surface?: string | null;
+  surfaceNotes?: string | null;
+  take?: string | null;
+  manualVisualEstimate?: string | null;
+  manualGradeOdds?: string | null;
+  inspectionNotes?: string | null;
+  estimatedGradedValue?: string | null;
+  gradedValueBasis?: string | null;
+  gradedValueSource?: string | null;
+  probabilities?: GradeProbabilityMap;
+  values?: GradeValueMap;
+  expectedGradedValue?: number | null;
+  rawMidUsed?: number | null;
+  grossEvUplift?: number | null;
+  psaVerification?: string | null;
+  psaVerificationNotes?: string | null;
+  psaDirectSource?: string | null;
+  psaDirectNotes?: string | null;
+  defects?: Array<{ side?: string | null; region?: string | null; category?: string | null; severity?: string | null; description: string }>;
+  centeringMeasurements?: {
+    frontLeft?: number | null; frontRight?: number | null; frontTop?: number | null; frontBottom?: number | null;
+    backLeft?: number | null; backRight?: number | null; backTop?: number | null; backBottom?: number | null;
+  } | null;
+  rubricVersion?: string | null;
+  gradedAt?: string | Date | null;
+};
+
+export type DemoCard = {
+  masterId: number;
+  category?: string | null;
+  name: string;
+  cardNumber?: string | null;
+  setName?: string | null;
+  year?: number | null;
+  variant?: string | null;
+  copyLabel?: string | null;
+  rawLow?: number | null;
+  rawHigh?: number | null;
+  rawMid?: number | null;
+  valueBucket?: string | null;
+  sleeve?: string | null;
+  toploader?: string | null;
+  logged?: string | null;
+  condition?: string | null;
+  asIsLow?: number | null;
+  asIsHigh?: number | null;
+  asIsMid?: number | null;
+  notes?: string | null;
+  sourceUrl?: string | null;
+  gradingStatus: GradingStatus;
+  grading?: DemoGrading | null;
+};
+
+export type CardListItem = {
+  id: string;
+  legacyMasterId?: number | null;
+  name: string;
+  cardNumber?: string | null;
+  setName?: string | null;
+  year?: number | null;
+  variant?: string | null;
+  copyLabel?: string | null;
+  rawMid?: number | null;
+  asIsMid?: number | null;
+  gradingStatus: string;
+  likelyGradeLabel?: string | null;
+  expectedValue?: number | null;
+  evUplift?: number | null;
+  toploader?: boolean;
+  mediaCount?: number;
+  submissionDecision?: string | null;
+  demo?: boolean;
+};
+
+export type MediaForGrading = {
+  id: string;
+  kind: string;
+  captureType: string;
+  mimeType?: string | null;
+  signedUrl?: string | null;
+  storagePath?: string | null;
+  selectedForGrading: boolean;
+  timestampMs?: number | null;
+  processingStatus?: string | null;
+  sharpnessScore?: number | null;
+  exposureScore?: number | null;
+  overallScore?: number | null;
+};
+
+export type CardDetail = CardListItem & {
+  category?: string | null;
+  condition?: string | null;
+  notes?: string | null;
+  rawLow?: number | null;
+  rawHigh?: number | null;
+  sourceUrl?: string | null;
+  latestGrade?: DemoGrading | null;
+  gradingHistory?: Array<Record<string, unknown> & { id?: string; createdAt?: Date | string; rubricVersion?: string | null; likelyGradeLabel?: string | null; decision?: string | null }>;
+  media?: MediaForGrading[];
+  latestValuation?: {
+    values: GradeValueMap;
+    sources: Partial<Record<PsaGrade, string | null>>;
+    sourceDetails?: Record<string, unknown> | null;
+    checkedAt?: Date | string | null;
+    expectedGradedValue?: number | null;
+    grossEvUplift?: number | null;
+    notes?: string | null;
+  } | null;
+};
