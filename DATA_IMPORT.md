@@ -2,13 +2,14 @@
 
 ## Preserved sources
 
-- `seed/source/collection-v24.xlsx`: original source workbook.
-- `seed/collection.json`: canonical normalized import, 860 physical cards.
+- `seed/source/collection-v25.xlsx`: reconciled source workbook.
+- `seed/collection.json`: canonical normalized import, 821 active physical cards.
+- `seed/retired-v25.json`: 39 retired duplicate/snapshot rows retained for audit and history preservation.
 - `apps/web/src/data/collection.json`: byte-identical read-only application fallback.
 - `seed/source/photos-manifest.csv`: 142 archived image entries with checksums.
 - `seed/photos-map.json`: archive folder-to-legacy-card mapping for 16 exact physical copies.
 
-The JSON includes 18 historical grading records from the existing work. These are real preserved inputs, not demo grades. The separately delivered photo/video archive remains outside Git and belongs in private Supabase Storage.
+The active and retired JSON files preserve all 18 historical grading records from the existing work. Seventeen belong to active cards; one remains attached to the archived Latias reconciliation record. These are real preserved inputs, not demo grades. The separately delivered photo/video archive remains outside Git and belongs in private Supabase Storage.
 
 ## Validate source integrity
 
@@ -25,7 +26,7 @@ npm run validate:data
 npm run validate:workbook
 ```
 
-The first check verifies canonical/fallback JSON equality, unique legacy IDs, copy separation, historical grading counts, media mapping/manifest counts, EV behavior including PSA 5, and absence of an OpenAI dependency. The workbook check independently compares all 860 identities and raw prices to `All Physical Cards` in the v24 workbook.
+The first check verifies canonical/fallback JSON equality, 821 unique active legacy IDs, the 39-row reconciliation archive, all 18 historical grading records, media mapping/manifest counts, EV behavior including PSA 5, and absence of an OpenAI dependency. The workbook check independently compares all active identities and raw prices to `All Physical Cards` in the v25 workbook.
 
 ## Seed PostgreSQL
 
@@ -41,7 +42,7 @@ The seed:
 - upserts physical cards by `legacy_master_id`;
 - matches/creates printings by exact name, number, set, and variant;
 - retains a separate UUID and copy label for every physical copy;
-- imports the 18 historical grading runs only when that card has no `chat-history-import` run;
+- imports 17 active and one reconciled archived grading run only when that card has no `chat-history-import` run;
 - does not delete or overwrite later ChatGPT grading runs;
 - preserves raw/as-is values, decision, notes, source context, probabilities, grade values, and available centering measurements.
 

@@ -20,7 +20,7 @@ $env:DATABASE_URL='the Supabase PostgreSQL connection string'
 npm --workspace apps/web run db:seed
 ```
 
-The seed upserts all 860 physical cards by legacy ID and does not erase newer grading history. Confirm 860 rows in `physical_cards` and 18 imported rows in `grading_runs` before importing media.
+The seed upserts 821 active physical cards plus 39 reconciled archived rows by legacy ID and does not erase newer grading history. Confirm all 860 retained database rows, the 821-record active application view, and 18 imported rows in `grading_runs` before importing media.
 
 ## 2. Railway project and services
 
@@ -119,7 +119,7 @@ Expected results:
 
 Then verify with private web credentials:
 
-1. Collection row count is 860 and duplicate copies have different permanent UUIDs.
+1. The application lists 821 active cards, the database retains 39 additional reconciled archive rows, and duplicate copies have different permanent UUIDs.
 2. Upload a small front image and confirm its private storage path starts with that exact card UUID.
 3. Upload a short video, wait for a completed job, review retained frames/contact sheet, and toggle selected frames.
 4. Mark the card Ready for Grading and retrieve it through MCP.

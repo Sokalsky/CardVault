@@ -54,7 +54,7 @@ For the worker, start Uvicorn and verify `/health` returns HTTP 200 with real FF
 
 After external provisioning:
 
-1. Apply migrations to a backed-up Supabase project and seed exactly 860 physical cards plus 18 imported grading runs.
+1. Apply migrations to a backed-up Supabase project and seed exactly 821 active physical cards plus 39 reconciliation-archived rows and 18 imported grading runs.
 2. Import the archive only after its 142-image dry-run succeeds.
 3. Build/deploy all three Railway services and inspect logs.
 4. Confirm web, worker, and MCP health responses as documented in [DEPLOYMENT.md](DEPLOYMENT.md).

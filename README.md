@@ -2,11 +2,11 @@
 
 CardVault is a private Pokémon collection manager and PSA pre-grading workflow. A card printing describes an issue/variant; every physical copy is a separate, permanently identified record with its own media, defects, grading history, values, and PSA lifecycle.
 
-The repository preserves the current collection: 860 distinct physical cards, the canonical v24 workbook, 18 historical grading runs, and mappings for the separately stored photo archive. It does not contain the photo archive itself.
+The repository preserves the reconciled collection: 821 active physical cards, 39 audited rows retired as duplicate/snapshot records, the canonical v25 workbook, all 18 historical grading results (17 active and one archived with its retired record), and mappings for the separately stored photo archive. It does not contain the photo archive itself.
 
 ## Architecture
 
-- `apps/web`: Next.js 16/TypeScript web application, server APIs, responsive collection/media/grading/submission screens, and read-only collection fallback when a database is unavailable.
+- `apps/web`: Next.js 16/TypeScript web application, server APIs, responsive collection/media/grading/submission screens, one-pick mixed photo/video upload, and read-only collection fallback when a database is unavailable.
 - `database`: reproducible additive PostgreSQL/Supabase migrations. Row-level security is enabled and the media bucket is private.
 - `services/video-worker`: Python/FastAPI worker using FFmpeg, OpenCV, exposure scoring, perceptual-hash de-duplication, retained frames, and contact sheets.
 - `services/mcp-server`: authenticated Streamable HTTP MCP service with 12 focused tools for ChatGPT.
@@ -18,6 +18,8 @@ CardVault does not use the OpenAI API. The web app stores and organizes collecti
 ## Data and valuation rules
 
 Physical copies are never deduplicated by name, set, number, or variant. Each `physical_cards.id` UUID owns its media and history. Storage paths are scoped as `cards/{physical_card_id}/...`, and both web and worker validate that relationship.
+
+On a card detail page, select its front first, back second, and all remaining photos and short videos in one file picker. CardVault classifies descriptive filenames where possible, extracts useful frames from videos, and moves the card to Ready for Grading after the whole batch succeeds. Individual media can still be included or excluded afterward.
 
 Each grading run is immutable history with separate centering, corners, edges, and surface assessments; defects; PSA 1–10 probabilities; confidence; recommendation; timestamp; and rubric version. A re-grade appends a run.
 

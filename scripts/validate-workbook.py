@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKBOOK = ROOT / "seed" / "source" / "collection-v24.xlsx"
+WORKBOOK = ROOT / "seed" / "source" / "collection-v25.xlsx"
 COLLECTION = ROOT / "seed" / "collection.json"
 
 
@@ -68,9 +68,9 @@ def main() -> None:
             if not math.isclose(money(card[json_key]), money(row[headers[column]]), abs_tol=0.0001):
                 raise AssertionError(f"ID {master_id}: {json_key} differs from workbook")
 
-    if len(workbook_ids) != 860 or workbook_ids != set(cards):
-        raise AssertionError(f"Expected the same 860 IDs; workbook={len(workbook_ids)} json={len(cards)}")
-    print("validated source workbook: 860 distinct physical cards match canonical JSON identities and raw prices")
+    if len(workbook_ids) != 821 or workbook_ids != set(cards):
+        raise AssertionError(f"Expected the same 821 active IDs; workbook={len(workbook_ids)} json={len(cards)}")
+    print("validated source workbook: 821 distinct active physical cards match canonical JSON identities and raw prices")
 
 
 if __name__ == "__main__":

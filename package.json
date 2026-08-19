@@ -12,6 +12,7 @@
     "test": "npm --workspace apps/web run test && npm --workspace services/mcp-server run test",
     "validate:migrations": "node scripts/validate-migrations.mjs",
     "validate:data": "node scripts/validate-data.mjs",
+    "update:collection": "python scripts/update-collection-from-workbook.py seed/source/collection-v25.xlsx",
     "refresh:card-images": "node scripts/build-card-image-map.mjs",
     "validate:workbook": "python scripts/validate-workbook.py"
   },

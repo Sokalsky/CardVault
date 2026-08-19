@@ -13,6 +13,7 @@ export default async function DashboardPage() {
   const submissionCandidates = cards.filter((c) => ["grade_candidate", "graded"].includes(c.gradingStatus) && c.submissionDecision === "grade" && Number(c.evUplift || 0) > 0);
   const rawTotal = cards.reduce((sum, c) => sum + Number(c.rawMid || 0), 0);
   const gradingEv = graded.reduce((sum, c) => sum + Number(c.evUplift || 0), 0);
+  const gradingAdjustedValue = rawTotal + gradingEv;
   const top = [...cards].sort((a, b) => Number(b.rawMid || 0) - Number(a.rawMid || 0)).slice(0, 12);
 
   return (
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
         <div className="metric"><div className="metric-label">Physical cards</div><div className="metric-value">{cards.length.toLocaleString()}</div><div className="metric-detail">Every duplicate tracked separately</div></div>
         <div className="metric"><div className="metric-label">Raw midpoint</div><div className="metric-value">{money(rawTotal)}</div><div className="metric-detail">TCGplayer + PriceCharting workflow</div></div>
         <div className="metric"><div className="metric-label">Manually graded</div><div className="metric-value">{manuallyGraded.length}</div><div className="metric-detail">Includes every saved result, including do-not-grade decisions</div></div>
-        <div className="metric"><div className="metric-label">Gross grading EV</div><div className="metric-value">{money(gradingEv)}</div><div className="metric-detail">Before PSA/shipping/selling costs</div></div>
+        <div className="metric"><div className="metric-label">Grading-adjusted value</div><div className="metric-value">{money(gradingAdjustedValue)}</div><div className="metric-detail">{money(gradingEv)} gross uplift before costs</div></div>
         <div className="metric"><div className="metric-label">Ready for grading</div><div className="metric-value">{ready.length}</div><div className="metric-detail">Selected media available through MCP</div></div>
         <div className="metric"><div className="metric-label">Grade candidates</div><div className="metric-value">{gradeCandidates.length}</div><div className="metric-detail">{submissionCandidates.length} positive-gross-EV PSA candidates</div></div>
       </div>

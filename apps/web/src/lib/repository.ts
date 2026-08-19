@@ -5,9 +5,11 @@ import { demoGetCard, demoListCards } from "@/lib/demo-data";
 import type { CardDetail, CardListItem, MediaForGrading } from "@/lib/types";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import cardImages from "@/data/card-images.json";
+import collection from "@/data/collection.json";
 
 const n = (value: unknown) => (value === null || value === undefined ? null : Number(value));
 const referenceImages = cardImages as Record<string, string>;
+const activeLegacyIds = new Set(collection.cards.map((card) => card.masterId));
 
 type ListCardsOptions = { includeThumbnails?: boolean };
 
@@ -83,7 +85,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     }
   }
 
-  return rows.map((row) => ({
+  return rows.filter((row) => row.legacyMasterId == null || activeLegacyIds.has(row.legacyMasterId)).map((row) => ({
     ...row,
     rawMid: n(row.rawMid),
     asIsMid: n(row.asIsMid),

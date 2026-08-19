@@ -8,6 +8,7 @@ import type { DemoCard, DemoGrading } from "../src/lib/types";
 type SeedGrading = DemoGrading & { psaDirectSource?: string | null; psaDirectNotes?: string | null };
 type SeedCard = DemoCard & { source?: string | null; grading?: SeedGrading | null };
 const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/data/collection.json"), "utf8"));
+const retired = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/data/retired-v25.json"), "utf8"));
 
 const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(Number(v)));
 const bool = (v: unknown) => String(v || "").toLowerCase() === "yes";
@@ -36,7 +37,8 @@ async function main() {
 const db = getDb();
 if (!db) throw new Error("DATABASE_URL is required.");
 
-for (const card of data.cards as SeedCard[]) {
+const cards = [...data.cards, ...retired.records.map((record: { card: SeedCard }) => record.card)] as SeedCard[];
+for (const card of cards) {
   const variant = card.variant || null;
   const existing = await db.select({id: cardPrintings.id}).from(cardPrintings).where(and(
     eq(cardPrintings.name, card.name),
@@ -70,10 +72,11 @@ for (const card of data.cards as SeedCard[]) {
     submissionDecision: grade ? normalizedDecision(grade.decision) : null,
     sleeve: bool(card.sleeve), toploader: bool(card.toploader),
   }).onConflictDoUpdate({ target: physicalCards.legacyMasterId, set: {
-    cardPrintingId: printingId, copyLabel: card.copyLabel, rawLow: num(card.rawLow), rawHigh: num(card.rawHigh), rawMid: num(card.rawMid),
+    cardPrintingId: printingId, copyLabel: card.copyLabel, copyNumber: copyNumber(card.copyLabel), rawLow: num(card.rawLow), rawHigh: num(card.rawHigh), rawMid: num(card.rawMid),
     asIsLow: num(card.asIsLow), asIsHigh: num(card.asIsHigh), asIsMid: num(card.asIsMid), conditionNote: card.condition, notes: card.notes,
     gradingStatus: card.gradingStatus, latestLikelyGrade: lg, latestGradeLabel: grade?.manualVisualEstimate || grade?.preGradeEstimate || null,
-    latestExpectedValue: num(grade?.expectedGradedValue), latestEvUplift: num(grade?.grossEvUplift), submissionDecision: grade ? normalizedDecision(grade.decision) : null, updatedAt: new Date(),
+    latestExpectedValue: num(grade?.expectedGradedValue), latestEvUplift: num(grade?.grossEvUplift), submissionDecision: grade ? normalizedDecision(grade.decision) : null,
+    valueBucket: card.valueBucket, sleeve: bool(card.sleeve), toploader: bool(card.toploader), updatedAt: new Date(),
   }}).returning({id: physicalCards.id});
 
   if (grade) {
@@ -88,7 +91,7 @@ for (const card of data.cards as SeedCard[]) {
         probability8: num(grade.probabilities?.["8"]), probability9: num(grade.probabilities?.["9"]), probability10: num(grade.probabilities?.["10"]),
         frontCenteringLeft: measured?.left, frontCenteringRight: measured?.right, frontCenteringTop: measured?.top, frontCenteringBottom: measured?.bottom,
         decision: normalizedDecision(grade.decision), notes: grade.inspectionNotes,
-        sourceContext: { source: "v24 handoff workbook", manualGradeOdds: grade.manualGradeOdds, valuationSource: grade.gradedValueSource, psaDirectSource: grade.psaDirectSource },
+        sourceContext: { source: "v25 reconciled workbook", manualGradeOdds: grade.manualGradeOdds, valuationSource: grade.gradedValueSource, psaDirectSource: grade.psaDirectSource },
       }).returning({id: gradingRuns.id});
       await db.insert(valuations).values({
         physicalCardId: physical.id, gradingRunId: run.id, rawMid: num(grade.rawMidUsed ?? card.rawMid),
@@ -100,7 +103,7 @@ for (const card of data.cards as SeedCard[]) {
     }
   }
 }
-console.log(`Seeded ${data.cards.length} physical cards.`);
+console.log(`Seeded ${data.cards.length} active cards and preserved ${retired.retiredCount} reconciled archived rows.`);
 }
 
 main()
