@@ -16,10 +16,10 @@ Status date: 2026-08-18. “Working” means exercised locally in this repositor
 - Production protection: web HTTP Basic gate, separate internal bearer token, OAuth MCP, worker shared secret, constant-time secret comparisons, private/signed media URLs, exact UUID ownership checks, type/size limits, and server-only service-role usage.
 - No OpenAI SDK, endpoint, grading call, API key, or inference requirement.
 - Independent Docker/Railway definitions and lockfiles for all three services, plus health checks and complete setup/deployment documentation.
+- Git repository initialized on `main`, `origin` set to `https://github.com/Sokalsky/CardVault.git`, logical commits pushed, and the remote head verified.
 
 ## Needs external setup
 
-- GitHub CLI is installed but not authenticated. The repository can be initialized and committed locally, but pushing requires `gh auth login` or existing Git credential-manager authorization.
 - Railway CLI is installed but not authenticated. Creating/linking the project, generating domains, setting sealed variables, deploying, and inspecting production logs require `railway login`.
 - No Supabase project URL, database URL, anon key, or service-role key exists in this environment. Remote migrations, production seed, storage upload, and end-to-end web/worker persistence therefore cannot be run yet.
 - Docker Desktop/Engine is not installed, so Dockerfiles cannot be built locally. The same application/package installs and service entrypoints are validated outside containers; Railway builds remain the container integration check.
