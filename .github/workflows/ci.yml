@@ -1,0 +1,59 @@
+name: CardVault CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cardvault-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            services/video-worker/requirements.txt
+            scripts/requirements.txt
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Install Python dependencies
+        run: python -m pip install -r services/video-worker/requirements.txt -r scripts/requirements.txt
+      - name: Validate application
+        run: |
+          npm run build
+          npm run typecheck
+          npm run lint
+          npm test
+          npm run validate:migrations
+          npm run validate:data
+          npm run validate:workbook
+          npm audit --audit-level=high
+      - name: Validate worker and media importer
+        run: |
+          python -m unittest test_worker.py
+          python -m py_compile app.py ../../scripts/import-photo-archive.py ../../scripts/validate-workbook.py
+        working-directory: services/video-worker
+      - name: Validate photo importer
+        run: python -m unittest scripts/test_importer.py
+      - name: Validate MCP transports and OAuth
+        run: |
+          node services/mcp-server/scripts/check-tools.mjs
+          node services/mcp-server/scripts/check-oauth.mjs
+      - name: Verify FFmpeg
+        run: ffmpeg -version
