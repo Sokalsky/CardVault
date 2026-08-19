@@ -19,6 +19,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
   const db = getDb();
   if (!db) return demoListCards();
 
+  try {
   const rows = await db
     .select({
       id: physicalCards.id,
@@ -92,6 +93,10 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     thumbnailUrl: signedFronts.get(row.id) || referenceImages[String(row.legacyMasterId)] || null,
     thumbnailSource: signedFronts.has(row.id) ? "grading" as const : referenceImages[String(row.legacyMasterId)] ? "reference" as const : null,
   }));
+  } catch (error) {
+    console.error("Database read failed; serving the preserved read-only collection.", error);
+    return demoListCards();
+  }
 }
 
 export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
@@ -156,7 +161,7 @@ export async function getValuationHistory(cardId: string) {
 
 export async function getCard(id: string): Promise<CardDetail | null> {
   const db = getDb();
-  if (!db) return demoGetCard(id);
+  if (!db || id.startsWith("legacy-")) return demoGetCard(id);
 
   const [row] = await db
     .select({
