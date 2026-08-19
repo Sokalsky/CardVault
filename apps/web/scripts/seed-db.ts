@@ -8,8 +8,6 @@ import type { DemoCard, DemoGrading } from "../src/lib/types";
 type SeedGrading = DemoGrading & { psaDirectSource?: string | null; psaDirectNotes?: string | null };
 type SeedCard = DemoCard & { source?: string | null; grading?: SeedGrading | null };
 const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/data/collection.json"), "utf8"));
-const db = getDb();
-if (!db) throw new Error("DATABASE_URL is required.");
 
 const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(Number(v)));
 const bool = (v: unknown) => String(v || "").toLowerCase() === "yes";
@@ -33,6 +31,10 @@ const frontCentering = (value?: string | null) => {
   const match = String(value || "").match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*L-R.*?(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*T-B/i);
   return match ? { left: match[1], right: match[2], top: match[3], bottom: match[4] } : null;
 };
+
+async function main() {
+const db = getDb();
+if (!db) throw new Error("DATABASE_URL is required.");
 
 for (const card of data.cards as SeedCard[]) {
   const variant = card.variant || null;
@@ -99,3 +101,11 @@ for (const card of data.cards as SeedCard[]) {
   }
 }
 console.log(`Seeded ${data.cards.length} physical cards.`);
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });
