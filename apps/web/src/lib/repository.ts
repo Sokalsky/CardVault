@@ -4,14 +4,18 @@ import { cardPrintings, gradingDefects, gradingRuns, mediaAssets, physicalCards,
 import { demoGetCard, demoListCards } from "@/lib/demo-data";
 import type { CardDetail, CardListItem, MediaForGrading } from "@/lib/types";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import cardImages from "@/data/card-images.json";
 
 const n = (value: unknown) => (value === null || value === undefined ? null : Number(value));
+const referenceImages = cardImages as Record<string, string>;
+
+type ListCardsOptions = { includeThumbnails?: boolean };
 
 export function isDemoMode() {
   return !process.env.DATABASE_URL;
 }
 
-export async function listCards(): Promise<CardListItem[]> {
+export async function listCards(options: ListCardsOptions = {}): Promise<CardListItem[]> {
   const db = getDb();
   if (!db) return demoListCards();
 
@@ -38,9 +42,45 @@ export async function listCards(): Promise<CardListItem[]> {
     .innerJoin(cardPrintings, eq(physicalCards.cardPrintingId, cardPrintings.id))
     .orderBy(desc(physicalCards.rawMid));
 
-  const mediaRows = await db.select({ physicalCardId: mediaAssets.physicalCardId }).from(mediaAssets);
+  const mediaRows = await db.select({
+    physicalCardId: mediaAssets.physicalCardId,
+    kind: mediaAssets.kind,
+    captureType: mediaAssets.captureType,
+    storagePath: mediaAssets.storagePath,
+    originalFilename: mediaAssets.originalFilename,
+    processingStatus: mediaAssets.processingStatus,
+  }).from(mediaAssets);
   const mediaCounts = new Map<string, number>();
   for (const media of mediaRows) mediaCounts.set(media.physicalCardId, (mediaCounts.get(media.physicalCardId) || 0) + 1);
+
+  const gradingFrontPaths = new Map<string, { path: string; priority: number }>();
+  if (options.includeThumbnails) {
+    for (const media of mediaRows) {
+      if (media.kind !== "image" || media.processingStatus !== "ready") continue;
+      const isExplicitFront = media.captureType === "front";
+      const isLegacyFront = media.captureType === "imported_grading_photo" && /^0*1[_\s.-]/i.test(media.originalFilename || "");
+      if (!isExplicitFront && !isLegacyFront) continue;
+      const priority = isExplicitFront ? 0 : 1;
+      const current = gradingFrontPaths.get(media.physicalCardId);
+      if (!current || priority < current.priority) gradingFrontPaths.set(media.physicalCardId, { path: media.storagePath, priority });
+    }
+  }
+
+  const signedFronts = new Map<string, string>();
+  const supabase = options.includeThumbnails ? getSupabaseAdmin() : null;
+  if (supabase && gradingFrontPaths.size) {
+    try {
+      const bucket = process.env.MEDIA_BUCKET || "grading-media";
+      const cardIds = [...gradingFrontPaths.keys()];
+      const paths = cardIds.map((cardId) => gradingFrontPaths.get(cardId)!.path);
+      const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, 3600);
+      data?.forEach((signed, index) => {
+        if (signed.signedUrl) signedFronts.set(cardIds[index], signed.signedUrl);
+      });
+    } catch (error) {
+      console.error("Could not sign collection thumbnails; using reference images.", error);
+    }
+  }
 
   return rows.map((row) => ({
     ...row,
@@ -49,6 +89,8 @@ export async function listCards(): Promise<CardListItem[]> {
     expectedValue: n(row.expectedValue),
     evUplift: n(row.evUplift),
     mediaCount: mediaCounts.get(row.id) || 0,
+    thumbnailUrl: signedFronts.get(row.id) || referenceImages[String(row.legacyMasterId)] || null,
+    thumbnailSource: signedFronts.has(row.id) ? "grading" as const : referenceImages[String(row.legacyMasterId)] ? "reference" as const : null,
   }));
 }
 

@@ -73,6 +73,28 @@ tbody tr:hover { background: #141920; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .empty { padding: 34px; text-align: center; color: var(--muted); }
 
+.collection-toolbar { align-items: center; }
+.collection-count { margin-left: auto; color: var(--muted); font-size: 12px; }
+.collection-list { display: grid; gap: 9px; }
+.collection-list-item { min-width: 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 15px; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 13px; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.collection-list-item:hover { background: #141920; border-color: #39434e; transform: translateY(-1px); }
+.collection-thumb { position: relative; width: 92px; aspect-ratio: 63 / 88; overflow: hidden; border-radius: 8px; background: #0a0d11; border: 1px solid #303844; }
+.collection-thumb img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; background: #0a0d11; }
+.collection-thumb-fallback { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 5px; color: #66717d; font-size: 10px; }
+.collection-image-source { position: absolute; z-index: 2; left: 5px; bottom: 5px; padding: 3px 5px; border-radius: 5px; background: rgba(4, 7, 10, .82); color: #d9e1e7; font-size: 9px; font-weight: 700; line-height: 1; backdrop-filter: blur(4px); }
+.collection-main { min-width: 0; display: grid; grid-template-columns: minmax(210px, 1.35fr) auto minmax(440px, 2fr); align-items: center; gap: 18px; }
+.collection-identity { min-width: 0; }
+.collection-identity .row-title { font-size: 15px; }
+.collection-copy { margin-top: 7px; color: var(--accent); font-size: 11px; font-weight: 700; }
+.collection-status { justify-self: start; }
+.collection-stats { display: grid; grid-template-columns: repeat(5, minmax(70px, 1fr)); gap: 12px; }
+.collection-stats div { min-width: 0; display: grid; gap: 4px; }
+.collection-stats span { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .055em; white-space: nowrap; }
+.collection-stats strong { overflow: hidden; color: var(--text); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.collection-stats strong.positive { color: var(--good); }
+.collection-stats strong.negative { color: var(--bad); }
+.collection-more { margin-top: 12px; text-align: center; }
+
 .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .detail-title { display: flex; gap: 12px; align-items: center; }
 .detail-id { width: 48px; height: 48px; border-radius: 11px; display: grid; place-items: center; border: 1px solid var(--border); background: var(--panel); font-weight: 800; color: var(--accent); }
@@ -100,6 +122,8 @@ tbody tr:hover { background: #141920; }
 @media (max-width: 1050px) {
   .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .section-grid, .detail-grid { grid-template-columns: 1fr; }
+  .collection-main { grid-template-columns: minmax(180px, 1fr) auto; }
+  .collection-stats { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
   .shell { display: block; }
@@ -120,6 +144,14 @@ tbody tr:hover { background: #141920; }
   .media-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .grade-grid { grid-template-columns: 1fr 1fr; }
   .upload-grid { grid-template-columns: 1fr; }
+  .collection-toolbar { grid-template-columns: 1fr 1fr; }
+  .collection-count { margin-left: 0; align-self: center; text-align: right; }
+  .collection-list-item { grid-template-columns: 74px minmax(0, 1fr); gap: 11px; padding: 10px; }
+  .collection-thumb { width: 74px; }
+  .collection-main { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .collection-status { order: 2; }
+  .collection-stats { order: 3; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 3px; }
+  .collection-stats div:nth-child(4), .collection-stats div:nth-child(5) { display: none; }
 }
 
 .media-tile { display: grid; gap: 8px; min-width: 0; }

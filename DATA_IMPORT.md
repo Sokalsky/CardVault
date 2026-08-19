@@ -85,6 +85,17 @@ python scripts/import-photo-archive.py C:\path\to\card-photos.zip
 
 Never put the service-role key in a browser variable, command history shared with others, or Git. After import, spot-check duplicate printings with multiple copies and confirm every media row/path belongs to the intended physical UUID.
 
+## Collection reference images
+
+The collection list prefers the front image uploaded for that exact physical-card UUID. If that copy has no front image, it uses the conservatively matched printing image in `apps/web/src/data/card-images.json`. Refresh that generated map after adding or correcting printings:
+
+```powershell
+npm run refresh:card-images
+npm run validate:data
+```
+
+The generator reads the published `PokemonTCG/pokemon-tcg-data` dataset and accepts only an exact normalized name, card number, and set match. Ambiguous and unresolved printings stay blank rather than displaying the wrong card. Reference artwork never replaces or alters private grading media.
+
 ## Future spreadsheet revisions
 
 Treat `seed/collection.json` as a generated migration input, not a disposable demo fixture. Before replacing it:

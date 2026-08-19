@@ -1,7 +1,9 @@
 import dataset from "@/data/collection.json";
+import cardImages from "@/data/card-images.json";
 import type { CardDetail, CardListItem, DemoCard } from "@/lib/types";
 
 const cards = dataset.cards as DemoCard[];
+const referenceImages = cardImages as Record<string, string>;
 
 export const demoSummary = dataset.summary;
 
@@ -26,6 +28,8 @@ export function demoListCards(): CardListItem[] {
     expectedValue: card.grading?.expectedGradedValue ?? null,
     evUplift: card.grading?.grossEvUplift ?? null,
     toploader: String(card.toploader).toLowerCase() === "yes",
+    thumbnailUrl: referenceImages[String(card.masterId)] || null,
+    thumbnailSource: referenceImages[String(card.masterId)] ? "reference" : null,
     demo: true,
   }));
 }

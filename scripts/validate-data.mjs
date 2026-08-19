@@ -38,7 +38,14 @@ const manifest = fs.readFileSync("seed/source/photos-manifest.csv", "utf8").trim
 assert.equal(manifest.length - 1, 142, "Photo manifest row count changed unexpectedly");
 assert.ok(fs.statSync("seed/source/collection-v24.xlsx").size > 100_000, "Preserved workbook is missing or truncated");
 
+const cardImages = JSON.parse(fs.readFileSync("apps/web/src/data/card-images.json", "utf8"));
+assert.ok(Object.keys(cardImages).length >= 700, "Reference image coverage unexpectedly dropped");
+for (const [masterId, url] of Object.entries(cardImages)) {
+  assert.ok(masterIds.has(Number(masterId)), `Reference image points to missing physical card ${masterId}`);
+  assert.match(url, /^https:\/\/images\.pokemontcg\.io\/[a-z0-9-]+\/[a-z0-9-]+\.png$/i, `Unexpected reference image URL for ${masterId}`);
+}
+
 for (const file of ["package.json", "apps/web/package.json", "services/mcp-server/package.json", ".env.example", "apps/web/.env.example", "services/mcp-server/.env.example", "services/video-worker/.env.example"]) {
   assert.doesNotMatch(fs.readFileSync(file, "utf8"), /OPENAI_API_KEY|\"openai\"\s*:/i, `${file} introduces an OpenAI API dependency`);
 }
-console.log("validated 860 physical cards, 18 historical grades, EV math (including PSA 5), 142-photo manifest mappings, and preserved workbook");
+console.log(`validated 860 physical cards, 18 historical grades, EV math (including PSA 5), 142-photo manifest mappings, ${Object.keys(cardImages).length} reference images, and preserved workbook`);

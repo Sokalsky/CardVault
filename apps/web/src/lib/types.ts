@@ -83,6 +83,8 @@ export type CardListItem = {
   evUplift?: number | null;
   toploader?: boolean;
   mediaCount?: number;
+  thumbnailUrl?: string | null;
+  thumbnailSource?: "grading" | "reference" | null;
   submissionDecision?: string | null;
   demo?: boolean;
 };
