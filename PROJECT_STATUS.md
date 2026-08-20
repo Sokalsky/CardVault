@@ -6,7 +6,7 @@ Status date: 2026-08-19. “Working” means exercised locally in this repositor
 
 - Next.js production build, TypeScript, ESLint, unit tests, dependency audit, and authenticated HTTP page smoke tests.
 - Responsive dashboard, card-list collection search/filtering, physical-card detail, one-pick mixed photo/video upload, media selection, grading queues/batch prompt preparation, gross-EV PSA submission candidates, and atomic exact-copy draft batch creation.
-- Path-scoped signed standard/TUS uploads with no browser Supabase credential, independent per-file failure handling, retry-safe rows, Storage reconciliation for incomplete placeholders, and a readiness gate that excludes unfinished/failed cards from both UI and MCP queues.
+- Path-scoped signed standard/TUS uploads with no browser Supabase credential, strict compact-JWS/expiry validation before any Storage request, independent per-file failure handling, retry-safe rows, and a readiness gate that excludes unfinished/failed cards from both UI and MCP queues. The web UI cannot delete stale placeholders; `database/maintenance` contains a review-only, rollback-by-default cleanup proposal.
 - Read-only local fallback containing all 821 active physical cards; write actions fail closed until Supabase is configured.
 - Three additive migrations validated by applying them to an embedded PostgreSQL-compatible database; 10 required tables, RLS, service-role access, constraints, triggers, indexes, private storage bucket setup, and separate-copy behavior checked.
 - Idempotent seed/import logic for 821 active cards plus 39 reconciled archived rows. All 18 historical grading results remain preserved, and v25 workbook identities/prices match canonical JSON for every active record.
@@ -18,12 +18,12 @@ Status date: 2026-08-19. “Working” means exercised locally in this repositor
 - No OpenAI SDK, endpoint, grading call, API key, or inference requirement.
 - Independent Docker/Railway definitions and lockfiles for all three services, plus health checks and complete setup/deployment documentation.
 - Git repository initialized on `main`, `origin` set to `https://github.com/Sokalsky/CardVault.git`, logical commits pushed, and the remote head verified.
-- The deployed web card pages, worker health (`ffmpeg`, OpenCV, Supabase/auth, queue poller), and MCP OAuth/DCR/PKCE flow responded successfully after the media-pipeline deployment. Live MCP checks returned exactly three valid selected records for each cleaned Dragonite test copy.
+- The signed-upload request builder is covered by tests proving that `Authorization` and `apikey` are absent, while malformed, expired, null, undefined, bearer-prefixed, and publishable-key values are rejected locally.
 
 ## Needs external setup
 
-- The Railway web, MCP, and worker services are deployed and publicly healthy. Railway dashboard-side logs, variables, and manual redeploy controls remain owner-managed because this environment is not linked to the Railway account.
-- The Supabase project exists and production pages confirm stored card/media rows. A real post-fix iPhone `.MOV` retry is still required to prove the signed-TUS request and extracted-frame chain against production Storage.
+- The Railway services use GitHub deployment, but Railway dashboard-side logs, variables, deployment status, and manual controls remain owner-managed because this environment is not linked to the Railway account.
+- No Supabase production operation is authorized from this environment. The owner must perform the real post-fix iPhone `.MOV` retry and verify its Storage row/job/frames; no anonymous-user Auth or Storage-policy change is required by the pre-signed upload architecture.
 - Docker Desktop/Engine is not installed, so Dockerfiles cannot be built locally. The same application/package installs and service entrypoints are validated outside containers; Railway builds remain the container integration check.
 - ChatGPT connection requires the deployed public MCP HTTPS URL and the owner's Developer Mode action.
 

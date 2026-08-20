@@ -4,6 +4,7 @@ import { getDb } from "@/db/client";
 import { and, eq } from "drizzle-orm";
 import { mediaAssets, physicalCards } from "@/db/schema";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { isCompactJws } from "@/lib/signed-upload";
 import { webAuthorized } from "@/lib/web-auth";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const upsert = Boolean(reusable);
   const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path, { upsert });
   if (error || !data) return NextResponse.json({ error: error?.message || "Unable to sign upload." }, { status: 500 });
-  if (!data.token || data.token.split(".").length !== 3) return NextResponse.json({ error: "Storage returned an invalid signed upload token." }, { status: 502 });
+  if (!isCompactJws(data.token)) return NextResponse.json({ error: "Storage returned an invalid or expired signed upload token." }, { status: 502 });
   const [asset] = reusable
     ? await db.update(mediaAssets).set({ processingStatus: "uploading", mimeType: body.contentType }).where(eq(mediaAssets.id, reusable.id)).returning({ id: mediaAssets.id })
     : await db.insert(mediaAssets).values({

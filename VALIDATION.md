@@ -48,7 +48,7 @@ Check:
 - `/collection`, `/grading`, and one `/cards/{id}` page render with credentials.
 - Mobile-width navigation, tables/cards, upload controls, frame selection, and history remain usable.
 - Signed resumable requests contain the server-issued `x-signature` JWS and never contain a publishable key, service-role key, or browser `Authorization` header.
-- A failed direct upload is recorded, can be retried without duplicating the physical card, and can be reconciled against Storage to remove an empty placeholder.
+- A failed direct upload is recorded and can be retried without duplicating the physical card. Stale-row cleanup is an explicit, narrowly scoped administrator-reviewed maintenance script rather than a browser mutation.
 - Ready-for-Grading is rejected while any upload/video is uploading, queued, processing, or failed.
 
 For the worker, start Uvicorn and verify `/health` returns HTTP 200 with real FFmpeg/OpenCV versions. Generate a short synthetic video with FFmpeg and confirm frames are extracted. A full `/process` integration requires a configured Supabase job/video row.

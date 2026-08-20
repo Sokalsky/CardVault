@@ -5,7 +5,7 @@ import * as tus from "tus-js-client";
 import { Images, Video } from "lucide-react";
 import { inferredCaptureType } from "@/lib/media-capture";
 import { mediaFileInfo } from "@/lib/media-file";
-import { signedStandardHeaders, signedTusHeaders } from "@/lib/signed-upload";
+import { requireSignedUploadJws, signedStandardHeaders, signedTusHeaders } from "@/lib/signed-upload";
 
 type TusFailure = Error & { originalResponse?: { getBody?: () => string; getStatus?: () => number } };
 
@@ -40,16 +40,21 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
     const mediaAssetId = String(data.mediaAssetId || "");
     const signedUrl = String(data.signedUrl || "");
     const tusEndpoint = String(data.tusEndpoint || "");
-    if (!mediaAssetId || !signedUrl || !tusEndpoint || !data.token) throw new Error("The server did not provide a complete signed storage destination.");
+    if (!mediaAssetId || !signedUrl || !tusEndpoint) throw new Error("The server did not provide a complete signed storage destination.");
 
-    let stage = "storage upload";
+    let stage = "signed upload validation";
     try {
+      // Supabase pre-signed uploads authenticate with x-signature. Authorization
+      // is deliberately absent: CardVault has no browser Supabase Auth session,
+      // and public/service keys must never be substituted for a user JWT.
+      const signedUploadToken = requireSignedUploadJws(data.token);
+      stage = "storage upload";
       if (kind === "video" || file.size > 6 * 1024 * 1024) {
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(file, {
           endpoint: tusEndpoint,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: signedTusHeaders(String(data.token), Boolean(data.upsert)),
+          headers: signedTusHeaders(signedUploadToken, Boolean(data.upsert)),
           uploadDataDuringCreation: true,
           removeFingerprintOnSuccess: true,
           metadata: {

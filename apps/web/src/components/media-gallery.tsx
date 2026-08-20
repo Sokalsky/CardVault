@@ -4,7 +4,7 @@
 import { useState } from "react";
 import type { MediaForGrading } from "@/lib/types";
 
-export function MediaGallery({ cardId, media, disabled }: { cardId: string; media: MediaForGrading[]; disabled?: boolean }) {
+export function MediaGallery({ media, disabled }: { media: MediaForGrading[]; disabled?: boolean }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const frames = media.filter((item) => Boolean(item.sourceMediaAssetId));
@@ -43,22 +43,6 @@ export function MediaGallery({ cardId, media, disabled }: { cardId: string; medi
       window.setTimeout(() => window.location.reload(), 2500);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Video processing could not be retried.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function reconcile() {
-    setBusyId("reconcile");
-    setMessage("Checking incomplete records against Supabase Storage…");
-    try {
-      const response = await fetch(`/api/cards/${cardId}/media/reconcile`, { method: "POST" });
-      if (!response.ok) throw new Error(await response.text());
-      const result = await response.json();
-      setMessage(`Cleanup complete: ${result.removed} empty placeholder(s) removed, ${result.recovered} photo(s) recovered, ${result.queued} video(s) queued.`);
-      window.setTimeout(() => window.location.reload(), 1200);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Media cleanup failed.");
     } finally {
       setBusyId(null);
     }
@@ -109,8 +93,7 @@ export function MediaGallery({ cardId, media, disabled }: { cardId: string; medi
       <span className="badge good">Selected: {selected}</span>
     </div>
     {incomplete && <div className="callout" style={{marginTop:12}}>
-      Incomplete upload records were found. Reselect a failed local file to retry it, or clean up placeholders that have no Storage object.
-      <div style={{marginTop:10}}><button className="btn small" disabled={disabled || busyId === "reconcile"} onClick={() => void reconcile()}>Clean up incomplete uploads</button></div>
+      Incomplete upload records were found. Reselect a failed local file to retry it. Removing stale placeholders is an administrator-reviewed maintenance action and is never performed by this page.
     </div>}
     {section("Original photos", photos)}
     {section("Original videos", videos)}

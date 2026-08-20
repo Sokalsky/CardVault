@@ -42,7 +42,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
               {!readiness.ready && card.gradingStatus === "ready_for_grading" && <div className="callout" style={{marginBottom:14}}>
                 This card is blocked from the MCP grading queue: {readiness.reasons.join("; ")}. Retry or remove the incomplete files below.
               </div>}
-              <MediaGallery cardId={card.id} media={media} disabled={isDemoMode()} />
+              <MediaGallery media={media} disabled={isDemoMode()} />
               <div style={{ marginTop: 14 }}><MediaUploader cardId={card.id} disabled={isDemoMode()} /></div>
             </div>
           </div>
