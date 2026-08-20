@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { MediaUploader } from "@/components/media-uploader";
 import { MediaGallery } from "@/components/media-gallery";
 import { CardActions } from "@/components/card-actions";
+import { assessMediaReadiness } from "@/lib/media-readiness";
 
 export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,6 +19,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   const measurements = grade?.centeringMeasurements;
   const hasMeasurements = measurements && Object.values(measurements).some((value) => value != null);
   const gradingHistory = card.gradingHistory || [];
+  const readiness = assessMediaReadiness(media);
 
   return (
     <div className="page">
@@ -37,7 +39,10 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
           <div className="card">
             <div className="card-head"><div className="card-title">Grading media</div><span className="badge">{selectedCount} selected · {media.length} total</span></div>
             <div className="card-body">
-              <MediaGallery media={media} disabled={isDemoMode()} />
+              {!readiness.ready && card.gradingStatus === "ready_for_grading" && <div className="callout" style={{marginBottom:14}}>
+                This card is blocked from the MCP grading queue: {readiness.reasons.join("; ")}. Retry or remove the incomplete files below.
+              </div>}
+              <MediaGallery cardId={card.id} media={media} disabled={isDemoMode()} />
               <div style={{ marginTop: 14 }}><MediaUploader cardId={card.id} disabled={isDemoMode()} /></div>
             </div>
           </div>

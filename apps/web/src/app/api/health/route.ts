@@ -14,13 +14,7 @@ export function GET() {
       configured: {
         database,
         storage,
-        browserUploads: Boolean(
-          storage && (
-            process.env.SUPABASE_PUBLISHABLE_KEY
-            || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-            || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-          ),
-        ),
+        browserUploads: storage,
         videoWorker: Boolean(process.env.VIDEO_WORKER_URL && process.env.VIDEO_WORKER_SECRET),
         mcpInternalAuth: Boolean(process.env.MCP_INTERNAL_TOKEN),
         webAuth: webAuthConfigured(),

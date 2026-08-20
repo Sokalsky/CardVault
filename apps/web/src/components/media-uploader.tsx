@@ -5,6 +5,7 @@ import * as tus from "tus-js-client";
 import { Images, Video } from "lucide-react";
 import { inferredCaptureType } from "@/lib/media-capture";
 import { mediaFileInfo } from "@/lib/media-file";
+import { signedStandardHeaders, signedTusHeaders } from "@/lib/signed-upload";
 
 type TusFailure = Error & { originalResponse?: { getBody?: () => string; getStatus?: () => number } };
 
@@ -39,8 +40,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
     const mediaAssetId = String(data.mediaAssetId || "");
     const signedUrl = String(data.signedUrl || "");
     const tusEndpoint = String(data.tusEndpoint || "");
-    const publicStorageKey = String(data.publicStorageKey || "");
-    if (!mediaAssetId || !signedUrl || !tusEndpoint || !publicStorageKey) throw new Error("The server did not provide a complete signed storage destination.");
+    if (!mediaAssetId || !signedUrl || !tusEndpoint || !data.token) throw new Error("The server did not provide a complete signed storage destination.");
 
     let stage = "storage upload";
     try {
@@ -49,7 +49,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
         const upload = new tus.Upload(file, {
           endpoint: tusEndpoint,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { apikey: publicStorageKey, "x-signature": data.token, "x-upsert": String(Boolean(data.upsert)) },
+          headers: signedTusHeaders(String(data.token), Boolean(data.upsert)),
           uploadDataDuringCreation: true,
           removeFingerprintOnSuccess: true,
           metadata: {
@@ -77,7 +77,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
         body.append("", file.type ? file : new File([file], file.name, { type: contentType, lastModified: file.lastModified }));
         const uploadResponse = await fetch(signedUrl, {
           method: "PUT",
-          headers: { apikey: publicStorageKey, "x-upsert": String(Boolean(data.upsert)) },
+          headers: signedStandardHeaders(Boolean(data.upsert)),
           body,
         });
         if (!uploadResponse.ok) throw new Error(`${uploadResponse.status} ${await uploadResponse.text()}`);
@@ -87,6 +87,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
       setMessage(kind === "video" ? `Processing video ${position} of ${total}…` : `Saving photo ${position} of ${total}…`);
       const complete = await fetch(`/api/media/${mediaAssetId}/complete`, { method: "POST" });
       if (!complete.ok) throw new Error(`${complete.status} ${await complete.text()}`);
+      if (kind === "video") await waitForVideo(mediaAssetId, position, total);
     } catch (error) {
       const reason = failureMessage(error);
       await fetch(`/api/media/${mediaAssetId}/failed`, {
@@ -98,6 +99,22 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
     }
   }
 
+  async function waitForVideo(mediaAssetId: string, position: number, total: number) {
+    const deadline = Date.now() + 5 * 60_000;
+    while (Date.now() < deadline) {
+      setMessage(`Processing video ${position} of ${total}…`);
+      await new Promise((resolve) => window.setTimeout(resolve, 2_000));
+      const response = await fetch(`/api/media/${mediaAssetId}/complete`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
+      const state = await response.json();
+      if (state.processingStatus === "ready") return;
+      if (state.processingStatus === "failed" || state.jobStatus === "failed") {
+        throw new Error(state.error || "Video frame extraction failed.");
+      }
+    }
+    throw new Error("Video processing did not finish within five minutes. It can be retried without uploading the video again.");
+  }
+
   async function uploadAll(selected: FileList) {
     if (disabled || busy) return;
     const files = Array.from(selected);
@@ -106,18 +123,22 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
       setMessage("Choose no more than 40 files for one card.");
       return;
     }
-    if (files.filter((file) => !mediaFileInfo(file).isVideo).length < 2) {
-      setMessage("Include at least a front photo and a back photo in the batch.");
-      return;
-    }
-
     setBusy(true);
     let photoIndex = 0;
+    const failures: string[] = [];
     try {
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
         const currentPhotoIndex = mediaFileInfo(file).isVideo ? -1 : photoIndex++;
-        await uploadOne(file, inferredCaptureType(file, currentPhotoIndex), index + 1, files.length);
+        try {
+          await uploadOne(file, inferredCaptureType(file, currentPhotoIndex), index + 1, files.length);
+        } catch (error) {
+          failures.push(error instanceof Error ? error.message : `${file.name} failed`);
+        }
+      }
+      if (failures.length) {
+        setMessage(`${files.length - failures.length} of ${files.length} files finished. ${failures.length} failed: ${failures.join(" | ")}`);
+        return;
       }
       setMessage("Uploads complete. Sending this card to the grading queue…");
       const status = await fetch(`/api/cards/${cardId}/status`, {
@@ -155,7 +176,7 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
         <Images size={13} style={{ verticalAlign: "-2px" }} /> Select the front first and back second, then every remaining photo. {" "}
         <Video size={13} style={{ verticalAlign: "-2px" }} /> Add all short surface/edge videos in the same selection. Videos are converted into grading frames automatically.
       </div>
-      <div className="upload-help">When every file finishes, the card is automatically marked Ready for Grading. You can still exclude weak frames afterward.</div>
+      <div className="upload-help">When every file and video finishes processing, the card is marked Ready for Grading. You can also reselect only a failed file to retry it.</div>
       {disabled && <div className="upload-help">Uploads require the connected production database and storage.</div>}
       {message && <div className="upload-help" aria-live="polite">{message}</div>}
     </div>

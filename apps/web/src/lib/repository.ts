@@ -1,11 +1,12 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { cardPrintings, gradingDefects, gradingRuns, mediaAssets, physicalCards, extractedFrames, valuations } from "@/db/schema";
+import { cardPrintings, gradingDefects, gradingRuns, mediaAssets, physicalCards, extractedFrames, processingJobs, valuations } from "@/db/schema";
 import { demoGetCard, demoListCards } from "@/lib/demo-data";
 import type { CardDetail, CardListItem, MediaForGrading } from "@/lib/types";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import cardImages from "@/data/card-images.json";
 import collection from "@/data/collection.json";
+import { assessMediaReadiness } from "@/lib/media-readiness";
 
 const n = (value: unknown) => (value === null || value === undefined ? null : Number(value));
 const referenceImages = cardImages as Record<string, string>;
@@ -57,9 +58,16 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     storagePath: mediaAssets.storagePath,
     originalFilename: mediaAssets.originalFilename,
     processingStatus: mediaAssets.processingStatus,
+    selectedForGrading: mediaAssets.selectedForGrading,
   }).from(mediaAssets);
   const mediaCounts = new Map<string, number>();
-  for (const media of mediaRows) mediaCounts.set(media.physicalCardId, (mediaCounts.get(media.physicalCardId) || 0) + 1);
+  const readinessMedia = new Map<string, typeof mediaRows>();
+  for (const media of mediaRows) {
+    readinessMedia.set(media.physicalCardId, [...(readinessMedia.get(media.physicalCardId) || []), media]);
+    if (media.processingStatus === "ready") mediaCounts.set(media.physicalCardId, (mediaCounts.get(media.physicalCardId) || 0) + 1);
+  }
+  const frameRows = await db.select({ physicalCardId: extractedFrames.physicalCardId }).from(extractedFrames);
+  for (const frame of frameRows) mediaCounts.set(frame.physicalCardId, (mediaCounts.get(frame.physicalCardId) || 0) + 1);
 
   const gradingFrontPaths = new Map<string, { path: string; priority: number }>();
   if (options.includeThumbnails) {
@@ -97,6 +105,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     expectedValue: n(row.expectedValue),
     evUplift: n(row.evUplift),
     mediaCount: mediaCounts.get(row.id) || 0,
+    gradingMediaReady: assessMediaReadiness(readinessMedia.get(row.id) || []).ready,
     thumbnailUrl: signedFronts.get(row.id) || referenceImages[String(row.legacyMasterId)] || null,
     thumbnailSource: signedFronts.has(row.id) ? "grading" as const : referenceImages[String(row.legacyMasterId)] ? "reference" as const : null,
   }));
@@ -115,7 +124,12 @@ export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
 
   const media = await db.select().from(mediaAssets).where(eq(mediaAssets.physicalCardId, cardId));
   const frames = await db.select().from(extractedFrames).where(eq(extractedFrames.physicalCardId, cardId));
+  const jobs = await db.select().from(processingJobs).where(eq(processingJobs.physicalCardId, cardId)).orderBy(desc(processingJobs.createdAt));
   const mediaById = new Map(media.map((m) => [m.id, m]));
+  const latestJobByMedia = new Map<string, (typeof jobs)[number]>();
+  for (const job of jobs) if (job.mediaAssetId && !latestJobByMedia.has(job.mediaAssetId)) latestJobByMedia.set(job.mediaAssetId, job);
+  const frameCountByMedia = new Map<string, number>();
+  for (const frame of frames) frameCountByMedia.set(frame.mediaAssetId, (frameCountByMedia.get(frame.mediaAssetId) || 0) + 1);
 
   const combined: MediaForGrading[] = [
     ...media.map((m) => ({
@@ -124,8 +138,14 @@ export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
       captureType: m.captureType,
       mimeType: m.mimeType,
       storagePath: m.storagePath,
+      originalFilename: m.originalFilename,
+      byteSize: m.byteSize,
       selectedForGrading: m.selectedForGrading && m.processingStatus === "ready",
       processingStatus: m.processingStatus,
+      frameCount: frameCountByMedia.get(m.id) || 0,
+      jobStatus: latestJobByMedia.get(m.id)?.status || null,
+      jobKind: latestJobByMedia.get(m.id)?.kind || null,
+      error: m.processingStatus === "failed" ? latestJobByMedia.get(m.id)?.error || null : null,
     })),
     ...frames.map((f) => ({
       id: f.id,
@@ -133,6 +153,7 @@ export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
       captureType: `${mediaById.get(f.mediaAssetId)?.captureType || "video"}_frame`,
       mimeType: "image/jpeg",
       storagePath: f.storagePath,
+      sourceMediaAssetId: f.mediaAssetId,
       selectedForGrading: f.selectedForGrading,
       timestampMs: f.timestampMs,
       sharpnessScore: n(f.sharpnessScore),
@@ -145,7 +166,7 @@ export async function getCardMedia(cardId: string): Promise<MediaForGrading[]> {
   if (!supabase) return combined;
   await Promise.all(
     combined.map(async (item) => {
-      if (!item.storagePath) return;
+      if (!item.storagePath || item.processingStatus !== "ready") return;
       const { data } = await supabase.storage.from(bucket).createSignedUrl(item.storagePath, 900);
       item.signedUrl = data?.signedUrl ?? null;
     }),

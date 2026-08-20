@@ -61,7 +61,6 @@ Use one output for `VIDEO_WORKER_SECRET`, one for `MCP_INTERNAL_TOKEN`, and one 
 ```text
 DATABASE_URL
 SUPABASE_URL
-SUPABASE_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY
 MEDIA_BUCKET=grading-media
 NEXT_PUBLIC_APP_URL=https://<generated web domain>
@@ -82,6 +81,8 @@ VIDEO_WORKER_SECRET
 FRAME_SAMPLE_FPS=4
 MAX_RETAINED_FRAMES=12
 MAX_VIDEO_BYTES=262144000
+MAX_JOB_ATTEMPTS=3
+QUEUE_POLL_SECONDS=5
 ```
 
 `PORT` is injected by Railway. The worker service-role key and secret must match the web values.

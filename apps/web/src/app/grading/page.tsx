@@ -9,7 +9,7 @@ export default async function GradingPage() {
   const queue = cards
     .filter((c) => ["graded", "grade_candidate", "needs_photos", "needs_more_photos", "ready_for_grading", "grading", "recheck", "do_not_grade", "ungraded"].includes(c.gradingStatus))
     .sort((a,b) => Number(b.rawMid || 0) - Number(a.rawMid || 0));
-  const ready = queue.filter((c) => c.gradingStatus === "ready_for_grading");
+  const ready = queue.filter((c) => c.gradingStatus === "ready_for_grading" && c.gradingMediaReady);
   const graded = queue.filter((c) => c.gradingStatus === "graded");
   const gradingResults = queue.filter((c) => Boolean(c.likelyGradeLabel));
   return (

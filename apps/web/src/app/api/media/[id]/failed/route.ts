@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { mediaAssets } from "@/db/schema";
+import { mediaAssets, processingJobs } from "@/db/schema";
 import { webAuthorized } from "@/lib/web-auth";
 
 const schema = z.object({
@@ -22,6 +22,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .where(eq(mediaAssets.id, id))
     .returning({ id: mediaAssets.id, physicalCardId: mediaAssets.physicalCardId, originalFilename: mediaAssets.originalFilename });
   if (!asset) return NextResponse.json({ error: "Media not found." }, { status: 404 });
+  await db.insert(processingJobs).values({
+    mediaAssetId: asset.id,
+    physicalCardId: asset.physicalCardId,
+    kind: "browser_upload",
+    status: "failed",
+    attempts: 1,
+    error: [parsed.data.stage, parsed.data.error].filter(Boolean).join(": ").slice(0, 2000),
+  });
   console.error("Browser media upload failed", { ...asset, ...parsed.data });
   return NextResponse.json({ ok: true });
 }

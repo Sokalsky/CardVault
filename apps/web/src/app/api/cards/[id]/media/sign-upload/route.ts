@@ -28,10 +28,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!db || !supabase) return NextResponse.json({ error: "Database/storage not configured." }, { status: 503 });
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) return NextResponse.json({ error: "Storage URL is not configured." }, { status: 503 });
-  const publicStorageKey = process.env.SUPABASE_PUBLISHABLE_KEY
-    || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!publicStorageKey) return NextResponse.json({ error: "Storage publishable key is not configured." }, { status: 503 });
   const { id } = await params;
   const parsed = bodySchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -61,6 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const upsert = Boolean(reusable);
   const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path, { upsert });
   if (error || !data) return NextResponse.json({ error: error?.message || "Unable to sign upload." }, { status: 500 });
+  if (!data.token || data.token.split(".").length !== 3) return NextResponse.json({ error: "Storage returned an invalid signed upload token." }, { status: 502 });
   const [asset] = reusable
     ? await db.update(mediaAssets).set({ processingStatus: "uploading", mimeType: body.contentType }).where(eq(mediaAssets.id, reusable.id)).returning({ id: mediaAssets.id })
     : await db.insert(mediaAssets).values({
@@ -76,5 +73,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }).returning({ id: mediaAssets.id });
   const projectId = new URL(supabaseUrl).hostname.split(".")[0];
   const tusEndpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
-  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint, publicStorageKey, upsert });
+  return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint, upsert });
 }

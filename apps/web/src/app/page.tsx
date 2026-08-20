@@ -9,7 +9,7 @@ export default async function DashboardPage() {
   const graded = cards.filter((c) => c.gradingStatus === "graded");
   const manuallyGraded = cards.filter((c) => Boolean(c.likelyGradeLabel));
   const needPhotos = cards.filter((c) => c.gradingStatus === "needs_photos");
-  const ready = cards.filter((c) => c.gradingStatus === "ready_for_grading");
+  const ready = cards.filter((c) => c.gradingStatus === "ready_for_grading" && c.gradingMediaReady);
   const gradeCandidates = cards.filter((c) => c.gradingStatus === "grade_candidate");
   const submissionCandidates = cards.filter((c) => ["grade_candidate", "graded"].includes(c.gradingStatus) && c.submissionDecision === "grade" && Number(c.evUplift || 0) > 0);
   const { rawTotal, expectedSlabValue, grossUplift, gradingAdjustedValue } = calculateCollectionValue(cards);

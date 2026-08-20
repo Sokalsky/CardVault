@@ -88,11 +88,11 @@ function mediaPriority(media: any) {
   return exact < 0 ? 999 : exact;
 }
 
-async function gradingMediaContent(media: any[], selectedOnly: boolean, maxImages: number) {
+async function gradingMediaContent(media: any[], selectedOnly: boolean, maxImages: number, imageOffset = 0) {
   const eligible = media
     .filter((item) => (!selectedOnly || item.selectedForGrading) && item.signedUrl && String(item.mimeType || "image/jpeg").startsWith("image/"))
     .sort((left, right) => mediaPriority(left) - mediaPriority(right))
-    .slice(0, maxImages);
+    .slice(imageOffset, imageOffset + maxImages);
   const content: Array<Record<string, unknown>> = [];
   for (const item of eligible) {
     content.push({ type: "text", text: `Media ${item.id}: ${item.captureType}${item.timestampMs != null ? ` @ ${item.timestampMs}ms` : ""}` });
@@ -135,30 +135,30 @@ function getServer() {
 
   server.registerTool("get_card_for_grading", {
     title: "Get coherent grading package",
-    description: "Retrieve one exact physical card with identity, raw price, centering, selected media/frames, and prior grading history in one call.",
-    inputSchema: { ...cardIdInput, includeImages: z.boolean().default(true), maxImages: z.number().int().min(1).max(20).default(15) },
+    description: "Retrieve one exact physical card with identity, raw price, centering, every selected media/frame record, and prior grading history. Image contents are paged with imageOffset/maxImages; increment imageOffset to inspect more than 20.",
+    inputSchema: { ...cardIdInput, includeImages: z.boolean().default(true), maxImages: z.number().int().min(1).max(20).default(15), imageOffset: z.number().int().min(0).max(1000).default(0) },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async ({ cardId, includeImages, maxImages }) => {
+  }, async ({ cardId, includeImages, maxImages, imageOffset }) => {
     const result = await api(`/api/internal/mcp/cards/${encodeURIComponent(cardId)}`);
     const card = result.card;
     const selectedMedia = (card.media || []).filter((item: any) => item.selectedForGrading).sort((a: any, b: any) => mediaPriority(a) - mediaPriority(b));
     const gradingPackage = { ...card, media: selectedMedia };
     const content: any[] = [{ type: "text", text: JSON.stringify({ ...gradingPackage, media: selectedMedia.map(({ signedUrl, ...item }: any) => item) }, null, 2) }];
-    if (includeImages) content.push(...await gradingMediaContent(selectedMedia, true, maxImages));
+    if (includeImages) content.push(...await gradingMediaContent(selectedMedia, true, maxImages, imageOffset));
     return { structuredContent: { card: gradingPackage }, content };
   });
 
   server.registerTool("get_card_media", {
     title: "Get card media",
-    description: "List original media and extracted frames for one physical card, optionally returning image content for deeper inspection.",
-    inputSchema: { ...cardIdInput, selectedOnly: z.boolean().default(false), includeImages: z.boolean().default(false), maxImages: z.number().int().min(1).max(20).default(15) },
+    description: "List every original media item and extracted frame for one physical card, optionally returning a page of image contents. Increment imageOffset by maxImages to inspect later images.",
+    inputSchema: { ...cardIdInput, selectedOnly: z.boolean().default(false), includeImages: z.boolean().default(false), maxImages: z.number().int().min(1).max(20).default(15), imageOffset: z.number().int().min(0).max(1000).default(0) },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async ({ cardId, selectedOnly, includeImages, maxImages }) => {
+  }, async ({ cardId, selectedOnly, includeImages, maxImages, imageOffset }) => {
     const result = await api(`/api/internal/mcp/cards/${encodeURIComponent(cardId)}/media`);
     const media = (result.media || []).filter((item: any) => !selectedOnly || item.selectedForGrading);
     const metadata = media.map(({ signedUrl, ...item }: any) => item);
     const content: any[] = [{ type: "text", text: JSON.stringify(metadata, null, 2) }];
-    if (includeImages) content.push(...await gradingMediaContent(media, selectedOnly, maxImages));
+    if (includeImages) content.push(...await gradingMediaContent(media, selectedOnly, maxImages, imageOffset));
     return { structuredContent: { media }, content };
   });
 

@@ -83,6 +83,7 @@ export type CardListItem = {
   evUplift?: number | null;
   toploader?: boolean;
   mediaCount?: number;
+  gradingMediaReady?: boolean;
   thumbnailUrl?: string | null;
   thumbnailSource?: "grading" | "reference" | null;
   submissionDecision?: string | null;
@@ -96,6 +97,13 @@ export type MediaForGrading = {
   mimeType?: string | null;
   signedUrl?: string | null;
   storagePath?: string | null;
+  originalFilename?: string | null;
+  byteSize?: number | null;
+  sourceMediaAssetId?: string | null;
+  frameCount?: number;
+  jobStatus?: string | null;
+  jobKind?: string | null;
+  error?: string | null;
   selectedForGrading: boolean;
   timestampMs?: number | null;
   processingStatus?: string | null;

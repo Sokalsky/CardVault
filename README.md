@@ -19,7 +19,7 @@ CardVault does not use the OpenAI API. The web app stores and organizes collecti
 
 Physical copies are never deduplicated by name, set, number, or variant. Each `physical_cards.id` UUID owns its media and history. Storage paths are scoped as `cards/{physical_card_id}/...`, and both web and worker validate that relationship.
 
-On a card detail page, select its front first, back second, and all remaining photos and short videos in one file picker. CardVault classifies descriptive filenames where possible, extracts useful frames from videos, and moves the card to Ready for Grading after the whole batch succeeds. Individual media can still be included or excluded afterward.
+On a card detail page, select its front first, back second, and all remaining photos and short videos in one file picker. The server creates short-lived, path-scoped signed upload tokens; browser code never receives a service-role key and does not require a Supabase user session. Large iPhone photos/videos use resumable TUS uploads, videos enter a durable processing queue, and the card cannot enter the MCP grading queue until every selected upload and video has resolved. Individual retained frames can still be included or excluded afterward.
 
 Each grading run is immutable history with separate centering, corners, edges, and surface assessments; defects; PSA 1–10 probabilities; confidence; recommendation; timestamp; and rubric version. A re-grade appends a run.
 
