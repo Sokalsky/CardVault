@@ -4,7 +4,7 @@ import { getDb } from "@/db/client";
 import { and, eq } from "drizzle-orm";
 import { mediaAssets, physicalCards } from "@/db/schema";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { isCompactJws } from "@/lib/signed-upload";
+import { isCompactJws, signedTusEndpoint } from "@/lib/signed-upload";
 import { webAuthorized } from "@/lib/web-auth";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -72,7 +72,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       processingStatus: "uploading",
       selectedForGrading: body.kind !== "video",
     }).returning({ id: mediaAssets.id });
-  const projectId = new URL(supabaseUrl).hostname.split(".")[0];
-  const tusEndpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
+  const tusEndpoint = signedTusEndpoint(supabaseUrl);
   return NextResponse.json({ mediaAssetId: asset.id, bucket, path, token: data.token, signedUrl: data.signedUrl, tusEndpoint, upsert });
 }

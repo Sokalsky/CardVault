@@ -35,6 +35,19 @@ export function signedTusHeaders(token: unknown, upsert: boolean) {
   return { "x-signature": requireSignedUploadJws(token), "x-upsert": String(upsert) };
 }
 
+/**
+ * Pre-signed resumable uploads MUST target the dedicated `/upload/resumable/sign`
+ * TUS route, which authenticates with the `x-signature` upload token alone.
+ * The plain `/upload/resumable` route requires an `Authorization` JWT and
+ * rejects credential-free requests with HTTP 400 "Invalid Compact JWS" before
+ * it ever reads `x-signature` — that was the production upload failure.
+ * Reference: supabase/supabase examples/storage/resumable-upload-signed-uppy.
+ */
+export function signedTusEndpoint(supabaseUrl: string) {
+  const projectId = new URL(supabaseUrl).hostname.split(".")[0];
+  return `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable/sign`;
+}
+
 export function signedStandardHeaders(upsert: boolean) {
   return { "x-upsert": String(upsert) };
 }

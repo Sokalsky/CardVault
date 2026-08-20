@@ -44,9 +44,10 @@ export function MediaUploader({ cardId, disabled }: { cardId: string; disabled?:
 
     let stage = "signed upload validation";
     try {
-      // Supabase pre-signed uploads authenticate with x-signature. Authorization
-      // is deliberately absent: CardVault has no browser Supabase Auth session,
-      // and public/service keys must never be substituted for a user JWT.
+      // Supabase pre-signed uploads authenticate with x-signature on the
+      // dedicated /upload/resumable/sign TUS route (see signedTusEndpoint).
+      // Authorization is deliberately absent: CardVault has no browser Supabase
+      // Auth session, and public/service keys must never substitute a user JWT.
       const signedUploadToken = requireSignedUploadJws(data.token);
       stage = "storage upload";
       if (kind === "video" || file.size > 6 * 1024 * 1024) {
