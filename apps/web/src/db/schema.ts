@@ -20,6 +20,7 @@ export const cardPrintings = pgTable(
     year: integer("year"),
     variant: text("variant"),
     category: text("category"),
+    domain: text("domain").default("pokemon").notNull(),
     sourceUrl: text("source_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },

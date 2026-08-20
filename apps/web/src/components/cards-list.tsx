@@ -3,11 +3,14 @@
 import { useMemo, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { CardListItem } from "@/lib/types";
 import { money } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { DOMAIN_META, domainFromPath } from "@/lib/domain";
 
 export function CardsList({ cards, initialLimit = 100 }: { cards: CardListItem[]; initialLimit?: number }) {
+  const section = domainFromPath(usePathname());
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [limit, setLimit] = useState(initialLimit);
@@ -33,7 +36,7 @@ export function CardsList({ cards, initialLimit = 100 }: { cards: CardListItem[]
           className="input search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search Pokémon, set, number, variant…"
+          placeholder={DOMAIN_META[section].searchPlaceholder}
         />
         <select className="select" value={status} onChange={(event) => setStatus(event.target.value)}>
           <option value="all">All statuses</option>
@@ -51,7 +54,7 @@ export function CardsList({ cards, initialLimit = 100 }: { cards: CardListItem[]
 
       <div className="collection-list">
         {visible.map((card) => (
-          <Link className="collection-list-item" href={`/cards/${card.id}`} key={card.id}>
+          <Link className="collection-list-item" href={`/${section}/cards/${card.id}`} key={card.id}>
             <div className="collection-thumb">
               <div className="collection-thumb-fallback"><ImageIcon size={22} /><span>No front</span></div>
               {card.thumbnailUrl && (

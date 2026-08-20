@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/fredoka";
+import "@fontsource/barlow-condensed/500.css";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource/barlow-condensed/700.css";
 import "./globals.css";
-import { Sidebar } from "@/components/sidebar";
+import { AppShell } from "@/components/app-shell";
 import { isDemoMode } from "@/lib/repository";
 
 export const metadata: Metadata = {
   title: "CardVault",
-  description: "Pokémon card collection, grading, media and PSA submission workflow",
+  description: "Pokémon and sports card collection, grading, media and PSA submission workflow",
 };
 
 // Railway injects database credentials at container runtime, not during the
@@ -17,16 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
-        <div className="shell">
-          <Sidebar />
-          <main className="main">
-            <div className="topbar">
-              <div className="topbar-title">CardVault · Pokémon Collection</div>
-              <div className="demo-pill">{demo ? "Demo data · connect Supabase to enable writes" : "Database connected"}</div>
-            </div>
-            {children}
-          </main>
-        </div>
+        <AppShell demo={demo}>{children}</AppShell>
       </body>
     </html>
   );

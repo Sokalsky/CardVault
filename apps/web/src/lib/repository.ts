@@ -12,7 +12,7 @@ const n = (value: unknown) => (value === null || value === undefined ? null : Nu
 const referenceImages = cardImages as Record<string, string>;
 const activeLegacyIds = new Set(collection.cards.map((card) => card.masterId));
 
-type ListCardsOptions = { includeThumbnails?: boolean };
+type ListCardsOptions = { includeThumbnails?: boolean; domain?: "pokemon" | "sports" };
 
 const production = process.env.NODE_ENV === "production";
 
@@ -24,7 +24,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
   const db = getDb();
   if (!db) {
     if (production) throw new Error("CardVault requires DATABASE_URL in production.");
-    return demoListCards();
+    return demoListCards(options.domain);
   }
 
   try {
@@ -32,6 +32,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     .select({
       id: physicalCards.id,
       legacyMasterId: physicalCards.legacyMasterId,
+      domain: cardPrintings.domain,
       name: cardPrintings.name,
       cardNumber: cardPrintings.cardNumber,
       setName: cardPrintings.setName,
@@ -49,6 +50,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
     })
     .from(physicalCards)
     .innerJoin(cardPrintings, eq(physicalCards.cardPrintingId, cardPrintings.id))
+    .where(options.domain ? eq(cardPrintings.domain, options.domain) : undefined)
     .orderBy(desc(physicalCards.rawMid));
 
   const mediaRows = await db.select({
@@ -112,7 +114,7 @@ export async function listCards(options: ListCardsOptions = {}): Promise<CardLis
   } catch (error) {
     if (production) throw error;
     console.error("Development database read failed; serving the preserved read-only collection.", error);
-    return demoListCards();
+    return demoListCards(options.domain);
   }
 }
 
@@ -200,6 +202,7 @@ export async function getCard(id: string): Promise<CardDetail | null> {
     .select({
       id: physicalCards.id,
       legacyMasterId: physicalCards.legacyMasterId,
+      domain: cardPrintings.domain,
       name: cardPrintings.name,
       cardNumber: cardPrintings.cardNumber,
       setName: cardPrintings.setName,

@@ -2,11 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { CardListItem } from "@/lib/types";
 import { money } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { DOMAIN_META, domainFromPath } from "@/lib/domain";
 
 export function CardsTable({ cards, initialLimit = 100 }: { cards: CardListItem[]; initialLimit?: number }) {
+  const section = domainFromPath(usePathname());
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [limit, setLimit] = useState(initialLimit);
@@ -25,7 +28,7 @@ export function CardsTable({ cards, initialLimit = 100 }: { cards: CardListItem[
   return (
     <>
       <div className="toolbar">
-        <input className="input search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Pokémon, set, number, variant…" />
+        <input className="input search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={DOMAIN_META[section].searchPlaceholder} />
         <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="all">All statuses</option>
           <option value="graded">Graded</option>
@@ -49,7 +52,7 @@ export function CardsTable({ cards, initialLimit = 100 }: { cards: CardListItem[
             {visible.map((card) => (
               <tr key={card.id}>
                 <td>
-                  <Link href={`/cards/${card.id}`}>
+                  <Link href={`/${section}/cards/${card.id}`}>
                     <div className="row-title">{card.name} {card.cardNumber ? `#${card.cardNumber}` : ""}</div>
                     <div className="row-sub">{card.setName || "Unknown set"}{card.variant ? ` · ${card.variant}` : ""}</div>
                   </Link>

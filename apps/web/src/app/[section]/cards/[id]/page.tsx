@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCard, isDemoMode } from "@/lib/repository";
+import { isDomain } from "@/lib/domain";
 import { money, probabilityPercent } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { MediaUploader } from "@/components/media-uploader";
@@ -7,10 +8,13 @@ import { MediaGallery } from "@/components/media-gallery";
 import { CardActions } from "@/components/card-actions";
 import { assessMediaReadiness } from "@/lib/media-readiness";
 
-export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function CardPage({ params }: { params: Promise<{ section: string; id: string }> }) {
+  const { section, id } = await params;
+  if (!isDomain(section)) notFound();
   const card = await getCard(id);
   if (!card) notFound();
+  // Keep the theme honest: a card always lives under its own section.
+  if (isDomain(card.domain) && card.domain !== section) redirect(`/${card.domain}/cards/${id}`);
   const grade = card.latestGrade;
   const probs = grade?.probabilities || {};
   const media = card.media || [];

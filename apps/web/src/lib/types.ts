@@ -66,9 +66,12 @@ export type DemoCard = {
   grading?: DemoGrading | null;
 };
 
+export type CardDomain = "pokemon" | "sports";
+
 export type CardListItem = {
   id: string;
   legacyMasterId?: number | null;
+  domain?: CardDomain | string;
   name: string;
   cardNumber?: string | null;
   setName?: string | null;

@@ -11,10 +11,13 @@ function likelyLabel(card: DemoCard) {
   return card.grading?.manualVisualEstimate || card.grading?.preGradeEstimate || null;
 }
 
-export function demoListCards(): CardListItem[] {
+export function demoListCards(domain?: "pokemon" | "sports"): CardListItem[] {
+  // The preserved demo dataset is entirely Pokémon; the Sports section starts empty.
+  if (domain === "sports") return [];
   return cards.map((card) => ({
     id: `legacy-${card.masterId}`,
     legacyMasterId: card.masterId,
+    domain: "pokemon",
     name: card.name,
     cardNumber: card.cardNumber,
     setName: card.setName,
