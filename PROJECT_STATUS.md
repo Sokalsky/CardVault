@@ -18,10 +18,11 @@ Status date: 2026-08-19. “Working” means exercised locally in this repositor
 - No OpenAI SDK, endpoint, grading call, API key, or inference requirement.
 - Independent Docker/Railway definitions and lockfiles for all three services, plus health checks and complete setup/deployment documentation.
 - Git repository initialized on `main`, `origin` set to `https://github.com/Sokalsky/CardVault.git`, logical commits pushed, and the remote head verified.
+- The deployed web card pages, worker health (`ffmpeg`, OpenCV, Supabase/auth, queue poller), and MCP OAuth/DCR/PKCE flow responded successfully after the media-pipeline deployment. Live MCP checks returned exactly three valid selected records for each cleaned Dragonite test copy.
 
 ## Needs external setup
 
-- The Railway project and web, MCP, and worker services exist. Railway account-side variables, deployment logs, and redeploy controls remain owner-managed.
+- The Railway web, MCP, and worker services are deployed and publicly healthy. Railway dashboard-side logs, variables, and manual redeploy controls remain owner-managed because this environment is not linked to the Railway account.
 - The Supabase project exists and production pages confirm stored card/media rows. A real post-fix iPhone `.MOV` retry is still required to prove the signed-TUS request and extracted-frame chain against production Storage.
 - Docker Desktop/Engine is not installed, so Dockerfiles cannot be built locally. The same application/package installs and service entrypoints are validated outside containers; Railway builds remain the container integration check.
 - ChatGPT connection requires the deployed public MCP HTTPS URL and the owner's Developer Mode action.

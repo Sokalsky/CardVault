@@ -8,6 +8,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 const selfHosted = !process.argv[2];
 const base = new URL(process.argv[2] || "http://127.0.0.1:3032");
 const password = process.argv[3] || randomBytes(24).toString("base64url");
+const smokeCardId = process.argv[4];
 let server;
 
 if (selfHosted) {
@@ -102,6 +103,17 @@ const client = new Client({ name: "cardvault-oauth-smoke", version: "1.0.0" });
 await client.connect(new StreamableHTTPClientTransport(new URL(resource), { requestInit: { headers: { authorization: `Bearer ${tokens.access_token}` } } }));
 const tools = await client.listTools();
 assert.equal(tools.tools.length, 12);
+const mediaTool = tools.tools.find((tool) => tool.name === "get_card_media");
+assert.ok(mediaTool?.inputSchema?.properties?.imageOffset, "get_card_media must expose imageOffset pagination");
+if (smokeCardId) {
+  const result = await client.callTool({ name: "get_card_media", arguments: { cardId: smokeCardId, selectedOnly: false, includeImages: false, maxImages: 20, imageOffset: 0 } });
+  const media = result.structuredContent?.media;
+  assert.ok(Array.isArray(media), "get_card_media must return its complete structured media list");
+  const grading = await client.callTool({ name: "get_card_for_grading", arguments: { cardId: smokeCardId, includeImages: false, maxImages: 20, imageOffset: 0 } });
+  const selected = grading.structuredContent?.card?.media;
+  assert.ok(Array.isArray(selected), "get_card_for_grading must return selected grading media");
+  console.log(`validated ${media.length} media records and ${selected.length} selected grading records for ${smokeCardId}`);
+}
 await client.close();
 console.log("validated OAuth discovery/DCR/PKCE/approval/token flow and authenticated MCP tool discovery");
 } finally {
