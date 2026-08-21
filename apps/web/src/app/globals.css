@@ -20,6 +20,10 @@
 ------------------------------------------------------------------- */
 
 :root {
+  /* A real football: pointed tips, tip stripes, laces. Shared by the
+     brand mark, the section switcher, the hero art and the match ball. */
+  --football-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 76'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23a8683a'/%3E%3Cstop offset='1' stop-color='%237c4520'/%3E%3C/linearGradient%3E%3CclipPath id='c'%3E%3Cpath d='M6 38Q60 -14 114 38Q60 90 6 38Z'/%3E%3C/clipPath%3E%3C/defs%3E%3Cpath d='M6 38Q60 -14 114 38Q60 90 6 38Z' fill='url(%23g)' stroke='%2355301a' stroke-width='3'/%3E%3Cg clip-path='url(%23c)' stroke='%23f6f1e4' stroke-width='4' fill='none'%3E%3Cpath d='M22 6V70M98 6V70'/%3E%3C/g%3E%3Cg stroke='%23f6f1e4' stroke-width='3.5' stroke-linecap='round' fill='none'%3E%3Cpath d='M42 38h36'/%3E%3Cpath d='M48 32v12M56 32v12M64 32v12M72 32v12'/%3E%3C/g%3E%3C/svg%3E");
+
   --font-body: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fredoka Variable", "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
 
@@ -111,10 +115,12 @@
   /* The field under the lights: turf fading into the night, chalk
      yard lines and mow stripes, a faint 50 at midfield */
   --bg: #0c2416;
+  /* Broadcast view: vertical yard lines with alternating mow panels,
+     the play runs left-to-right across them */
   --bg-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='240'%3E%3Ctext x='180' y='140' text-anchor='middle' font-family='Arial, sans-serif' font-size='170' font-weight='800' fill='none' stroke='%23ffffff' stroke-opacity='.07' stroke-width='3'%3E50%3C/text%3E%3C/svg%3E") no-repeat right -50px top 120px,
-    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 150px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 90px, transparent 90px 180px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 180px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 180px, transparent 180px 360px),
     linear-gradient(180deg, #2f8047 0%, #276c3b 28%, #1a4d2c 58%, #0d2517 84%, #0a1c12 100%);
   /* Surfaces: clean white, same system as the Pokémon side */
   --panel: #ffffff;
@@ -195,20 +201,14 @@ button { cursor: pointer; }
 }
 .brand-mark.pokeball { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22); }
 .pokeball-mini { width: 13px; height: 13px; flex: 0 0 auto; display: inline-block; border-width: 1px; }
-/* A CSS football: pigskin ellipse, white lace line with cross-stitches */
+/* The football itself (see --football-svg) */
 .brand-mark.football, .football-mini {
-  border-radius: 50%;
   transform: rotate(-18deg);
-  border: 1.5px solid #55301a;
-  background:
-    repeating-linear-gradient(90deg, #fff 0 1.6px, transparent 1.6px 4.4px) center / 14px 7px no-repeat,
-    linear-gradient(#fff, #fff) center / 15px 1.6px no-repeat,
-    radial-gradient(ellipse at 35% 30%, #a86436, #7c4520 75%);
+  border: none;
+  background: var(--football-svg) no-repeat center / contain;
 }
-.brand-mark.football { width: 38px; height: 24px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22); }
-.football-mini { width: 16px; height: 10px; flex: 0 0 auto; display: inline-block; border-width: 1px; background:
-    linear-gradient(#fff, #fff) center / 7px 1px no-repeat,
-    radial-gradient(ellipse at 35% 30%, #a86436, #7c4520 75%); }
+.brand-mark.football { width: 40px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); }
+.football-mini { width: 17px; height: 11px; flex: 0 0 auto; display: inline-block; }
 .brand-title { font-family: var(--font-display); font-size: 18px; font-weight: var(--title-weight); letter-spacing: var(--title-tracking); text-transform: var(--title-transform); color: var(--brand-fg); }
 .brand-sub { color: var(--brand-sub-fg); font-size: 11.5px; margin-top: 2px; }
 
@@ -332,13 +332,12 @@ tbody tr:hover { background: var(--hover); }
 /* Football */
 [data-theme="sports"] .section-hero-art {
   width: 300px;
-  height: 185px;
-  inset: auto -70px -60px auto;
+  height: 190px;
+  inset: auto -60px -50px auto;
+  border-radius: 0;
   transform: rotate(-18deg);
-  background:
-    repeating-linear-gradient(90deg, #fff 0 4px, transparent 4px 15px) center / 92px 36px no-repeat,
-    linear-gradient(#fff, #fff) center / 100px 5px no-repeat,
-    radial-gradient(ellipse at 40% 32%, #a86436, #7c4520 78%);
+  opacity: .18;
+  background: var(--football-svg) no-repeat center / contain;
 }
 
 .collection-toolbar { align-items: center; }
@@ -538,29 +537,32 @@ tbody tr:hover { background: var(--hover); }
 [data-theme="sports"] .main { animation: bunting-sway 7s ease-in-out infinite; }
 
 /* --------------------------------------------------------------
-   The ambient match: X's and O's line up on the field behind the
-   page, snap the ball, and run a play on a ~14s loop.
+   The ambient match: two teams line up either side of the ball,
+   snap, and run a play left-to-right on a ~14s loop. Players are
+   little top-down sprites — helmet, shoulder pads, jersey.
 --------------------------------------------------------------- */
 .field-match { position: fixed; top: 0; bottom: 0; left: 236px; right: 0; z-index: 0; pointer-events: none; }
 .fm-o, .fm-x, .fm-ball { position: absolute; will-change: transform, opacity; }
-.fm-o { width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid rgba(255, 255, 255, 0.85); }
-.fm-x { width: 14px; height: 14px; background:
-  linear-gradient(45deg, transparent calc(50% - 1.3px), #e3b74e calc(50% - 1.3px) calc(50% + 1.3px), transparent calc(50% + 1.3px)),
-  linear-gradient(-45deg, transparent calc(50% - 1.3px), #e3b74e calc(50% - 1.3px) calc(50% + 1.3px), transparent calc(50% + 1.3px)); }
-.fm-ball { width: 18px; height: 11px; border-radius: 50%; background: radial-gradient(ellipse at 40% 35%, #a86436, #7c4520 80%); box-shadow: inset 0 0 0 0.5px #55301a; }
-/* Offense (O's) on the line, QB deeper, receiver wide right */
-.fm-o1 { left: 16%; top: 62%; }
-.fm-o2 { left: 32%; top: 62%; }
-.fm-o3 { left: 49%; top: 66%; } /* QB */
-.fm-o4 { left: 62%; top: 62%; }
-.fm-o5 { left: 78%; top: 62%; } /* receiver */
-/* Defense (X's) across the line */
-.fm-x1 { left: 18%; top: 56%; }
-.fm-x2 { left: 33%; top: 56%; }
-.fm-x3 { left: 48%; top: 56%; }
-.fm-x4 { left: 63%; top: 56%; }
-.fm-x5 { left: 77%; top: 56%; } /* corner covering the receiver */
-.fm-ball { left: 49.3%; top: 65%; }
+/* Offense: white jerseys, red helmets, facing right */
+.fm-o { width: 19px; height: 19px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg transform='rotate(90 20 20)'%3E%3Crect x='6' y='16' width='28' height='13' rx='6.5' fill='%23f6f1e4' stroke='%23c9c2ae' stroke-width='1'/%3E%3Ccircle cx='20' cy='14' r='8' fill='%23d64f3f' stroke='%23a53326' stroke-width='1.5'/%3E%3Cpath d='M20 6v16' stroke='%23f6f1e4' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain; }
+/* Defense: navy jerseys, gold helmets, facing left */
+.fm-x { width: 19px; height: 19px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg transform='rotate(-90 20 20)'%3E%3Crect x='6' y='16' width='28' height='13' rx='6.5' fill='%2335507e' stroke='%2324365a' stroke-width='1'/%3E%3Ccircle cx='20' cy='14' r='8' fill='%23e3b74e' stroke='%23b8862c' stroke-width='1.5'/%3E%3Cpath d='M20 6v16' stroke='%2335507e' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain; }
+.fm-o, .fm-x { width: 22px; height: 22px; }
+.fm-ball { width: 21px; height: 14px; background: var(--football-svg) no-repeat center / contain; }
+/* The play lives in the lower, open half of the field so the cards
+   above don't cover it. Offense left of the ball, receiver split high */
+.fm-o1 { left: 31%; top: 62%; }
+.fm-o2 { left: 31%; top: 70%; }
+.fm-o3 { left: 26.5%; top: 70%; } /* QB */
+.fm-o4 { left: 31%; top: 78%; }
+.fm-o5 { left: 31%; top: 55%; } /* receiver, split wide */
+/* Defense mirrored across the line */
+.fm-x1 { left: 36%; top: 62%; }
+.fm-x2 { left: 36%; top: 70%; }
+.fm-x3 { left: 36%; top: 78%; }
+.fm-x4 { left: 36%; top: 59%; } /* nickel over the slot */
+.fm-x5 { left: 37.5%; top: 55%; } /* corner pressing the receiver */
+.fm-ball { left: 28.8%; top: 70.6%; }
 
 .fm-o { animation: fm-o-idle 14s ease-in-out infinite; }
 .fm-x { animation: fm-x-idle 14s ease-in-out infinite; }
@@ -571,60 +573,60 @@ tbody tr:hover { background: var(--hover); }
 
 /* Linemen hold their blocks, defense pushes, everyone resets */
 @keyframes fm-o-idle {
-  0%, 10% { opacity: .38; transform: none; }
-  14% { transform: translateY(-1.2vh); }
-  55% { transform: translateY(-1.2vh); }
-  64% { opacity: .38; }
-  70% { opacity: 0; transform: translateY(-1.2vh); }
-  71% { opacity: 0; transform: none; }
-  82%, 100% { opacity: .38; transform: none; }
-}
-@keyframes fm-x-idle {
-  0%, 10% { opacity: .42; transform: none; }
-  16% { transform: translateY(2vh); }
-  55% { transform: translateY(2vh); }
-  64% { opacity: .42; }
-  70% { opacity: 0; transform: translateY(2vh); }
-  71% { opacity: 0; transform: none; }
-  82%, 100% { opacity: .42; transform: none; }
-}
-/* QB drops back, throws, jogs off */
-@keyframes fm-qb {
-  0%, 10% { opacity: .45; transform: none; }
-  15% { transform: translateY(3vh); }
-  55% { transform: translateY(3vh); }
-  70% { opacity: 0; transform: translateY(3vh); }
-  71% { opacity: 0; transform: none; }
-  82%, 100% { opacity: .45; transform: none; }
-}
-/* Receiver streaks downfield and hauls it in */
-@keyframes fm-receiver {
   0%, 10% { opacity: .5; transform: none; }
-  13% { transform: translateY(-2vh); }
-  36% { transform: translateY(-34vh); }
-  50% { transform: translateY(-38vh); }
-  70% { opacity: 0; transform: translateY(-38vh); }
+  14% { transform: translateX(0.6vw); }
+  55% { transform: translateX(0.6vw); }
+  64% { opacity: .5; }
+  70% { opacity: 0; transform: translateX(0.6vw); }
   71% { opacity: 0; transform: none; }
   82%, 100% { opacity: .5; transform: none; }
 }
+@keyframes fm-x-idle {
+  0%, 10% { opacity: .5; transform: none; }
+  16% { transform: translateX(-0.9vw); }
+  55% { transform: translateX(-0.9vw); }
+  64% { opacity: .5; }
+  70% { opacity: 0; transform: translateX(-0.9vw); }
+  71% { opacity: 0; transform: none; }
+  82%, 100% { opacity: .5; transform: none; }
+}
+/* QB drops back, throws, jogs off */
+@keyframes fm-qb {
+  0%, 10% { opacity: .55; transform: none; }
+  15% { transform: translateX(-2.2vw); }
+  55% { transform: translateX(-2.2vw); }
+  70% { opacity: 0; transform: translateX(-2.2vw); }
+  71% { opacity: 0; transform: none; }
+  82%, 100% { opacity: .55; transform: none; }
+}
+/* Receiver streaks down the sideline and hauls it in */
+@keyframes fm-receiver {
+  0%, 10% { opacity: .6; transform: none; }
+  13% { transform: translateX(1.5vw); }
+  36% { transform: translateX(26vw); }
+  50% { transform: translateX(31vw); }
+  70% { opacity: 0; transform: translateX(31vw); }
+  71% { opacity: 0; transform: none; }
+  82%, 100% { opacity: .6; transform: none; }
+}
 /* The corner turns and runs with him */
 @keyframes fm-chase {
-  0%, 14% { opacity: .45; transform: none; }
-  40% { transform: translate(0.6vw, -24vh); }
-  54% { transform: translate(1vw, -32vh); }
-  70% { opacity: 0; transform: translate(1vw, -32vh); }
+  0%, 14% { opacity: .55; transform: none; }
+  40% { transform: translate(18vw, 0.5vh); }
+  54% { transform: translate(27vw, 0.2vh); }
+  70% { opacity: 0; transform: translate(27vw, 0.2vh); }
   71% { opacity: 0; transform: none; }
-  82%, 100% { opacity: .45; transform: none; }
+  82%, 100% { opacity: .55; transform: none; }
 }
-/* Snap held, then a deep spiral to the right sideline */
+/* Snap held, then the throw: up the field to the streaking receiver */
 @keyframes fm-pass {
-  0%, 34% { opacity: .85; transform: none; }
-  42% { transform: translate(14vw, -22vh) scale(1.9) rotate(540deg); }
-  50% { transform: translate(27.5vw, -37vh) scale(1) rotate(1080deg); }
-  56% { transform: translate(27.7vw, -38vh) rotate(1080deg); }
-  70% { opacity: 0; transform: translate(27.7vw, -38vh) rotate(1080deg); }
+  0%, 34% { opacity: .9; transform: none; }
+  42% { transform: translate(15vw, -9vh) scale(1.7) rotate(-10deg); }
+  50% { transform: translate(30vw, -15.5vh) scale(1) rotate(4deg); }
+  56% { transform: translate(30.5vw, -15.5vh) rotate(0deg); }
+  70% { opacity: 0; transform: translate(30.5vw, -15.5vh); }
   71% { opacity: 0; transform: none; }
-  82%, 100% { opacity: .85; transform: none; }
+  82%, 100% { opacity: .9; transform: none; }
 }
 [data-theme="pokemon"] .section-hero::after {
   content: "";
