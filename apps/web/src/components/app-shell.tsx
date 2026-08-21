@@ -88,8 +88,8 @@ export function AppShell({ demo, children }: { demo: boolean; children: React.Re
 
       {section === "sports" && (
         <div className="field-match" aria-hidden>
-          {[1, 2, 3, 4, 5].map((i) => <span key={`o${i}`} className={`fm-o fm-o${i}`} />)}
-          {[1, 2, 3, 4, 5].map((i) => <span key={`x${i}`} className={`fm-x fm-x${i}`} />)}
+          {Array.from({ length: 11 }, (_, i) => i + 1).map((i) => <span key={`o${i}`} className={`fm-o fm-o${i}`} />)}
+          {Array.from({ length: 11 }, (_, i) => i + 1).map((i) => <span key={`x${i}`} className={`fm-x fm-x${i}`} />)}
           <span className="fm-ball" />
         </div>
       )}

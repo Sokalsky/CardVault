@@ -549,26 +549,40 @@ tbody tr:hover { background: var(--hover); }
 .fm-x { width: 19px; height: 19px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg transform='rotate(-90 20 20)'%3E%3Crect x='6' y='16' width='28' height='13' rx='6.5' fill='%2335507e' stroke='%2324365a' stroke-width='1'/%3E%3Ccircle cx='20' cy='14' r='8' fill='%23e3b74e' stroke='%23b8862c' stroke-width='1.5'/%3E%3Cpath d='M20 6v16' stroke='%2335507e' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain; }
 .fm-o, .fm-x { width: 22px; height: 22px; }
 .fm-ball { width: 21px; height: 14px; background: var(--football-svg) no-repeat center / contain; }
-/* The play lives in the lower, open half of the field so the cards
-   above don't cover it. Offense left of the ball, receiver split high */
-.fm-o1 { left: 31%; top: 62%; }
-.fm-o2 { left: 31%; top: 70%; }
-.fm-o3 { left: 26.5%; top: 70%; } /* QB */
-.fm-o4 { left: 31%; top: 78%; }
-.fm-o5 { left: 31%; top: 55%; } /* receiver, split wide */
+/* 11-on-11, line of scrimmage mid-screen, formation spanning the
+   open lower field. Offense left of the ball. */
+.fm-o1 { left: 46%; top: 58%; }   /* LT */
+.fm-o2 { left: 46%; top: 64%; }   /* LG */
+.fm-o3 { left: 46%; top: 70%; }   /* C */
+.fm-o4 { left: 46%; top: 76%; }   /* RG */
+.fm-o5 { left: 46%; top: 82%; }   /* RT */
+.fm-o6 { left: 46%; top: 88%; }   /* TE */
+.fm-o7 { left: 46%; top: 48%; }   /* X receiver — runs the go route */
+.fm-o8 { left: 43%; top: 53%; }   /* slot */
+.fm-o9 { left: 41%; top: 70%; }   /* QB */
+.fm-o10 { left: 36.5%; top: 70%; } /* RB */
+.fm-o11 { left: 46%; top: 92%; }  /* Z receiver */
 /* Defense mirrored across the line */
-.fm-x1 { left: 36%; top: 62%; }
-.fm-x2 { left: 36%; top: 70%; }
-.fm-x3 { left: 36%; top: 78%; }
-.fm-x4 { left: 36%; top: 59%; } /* nickel over the slot */
-.fm-x5 { left: 37.5%; top: 55%; } /* corner pressing the receiver */
-.fm-ball { left: 28.8%; top: 70.6%; }
+.fm-x1 { left: 50%; top: 58%; }   /* DL */
+.fm-x2 { left: 50%; top: 66%; }
+.fm-x3 { left: 50%; top: 74%; }
+.fm-x4 { left: 50%; top: 82%; }
+.fm-x5 { left: 55%; top: 62%; }   /* LBs */
+.fm-x6 { left: 55%; top: 70%; }
+.fm-x7 { left: 55%; top: 78%; }
+.fm-x8 { left: 49.5%; top: 48%; } /* corner pressing the X — chases */
+.fm-x9 { left: 50%; top: 53%; }   /* nickel over the slot */
+.fm-x10 { left: 63%; top: 56%; }  /* free safety — rotates over the top */
+.fm-x11 { left: 63%; top: 84%; }  /* strong safety */
+.fm-ball { left: 44.8%; top: 70.6%; }
 
 .fm-o { animation: fm-o-idle 14s ease-in-out infinite; }
 .fm-x { animation: fm-x-idle 14s ease-in-out infinite; }
-.fm-o3 { animation: fm-qb 14s ease-in-out infinite; }
-.fm-o5 { animation: fm-receiver 14s ease-in-out infinite; }
-.fm-x5 { animation: fm-chase 14s ease-in-out infinite; }
+.fm-o9 { animation: fm-qb 14s ease-in-out infinite; }
+.fm-o10 { animation: fm-swing 14s ease-in-out infinite; }
+.fm-o7 { animation: fm-receiver 14s ease-in-out infinite; }
+.fm-x8 { animation: fm-chase 14s ease-in-out infinite; }
+.fm-x10 { animation: fm-safety 14s ease-in-out infinite; }
 .fm-ball { animation: fm-pass 14s ease-in-out infinite; }
 
 /* Linemen hold their blocks, defense pushes, everyone resets */
@@ -599,32 +613,53 @@ tbody tr:hover { background: var(--hover); }
   71% { opacity: 0; transform: none; }
   82%, 100% { opacity: .55; transform: none; }
 }
-/* Receiver streaks down the sideline and hauls it in */
+/* Receiver takes the top off the defense — sideline to sideline */
 @keyframes fm-receiver {
   0%, 10% { opacity: .6; transform: none; }
   13% { transform: translateX(1.5vw); }
-  36% { transform: translateX(26vw); }
-  50% { transform: translateX(31vw); }
-  70% { opacity: 0; transform: translateX(31vw); }
+  36% { transform: translateX(33vw); }
+  50% { transform: translateX(40vw); }
+  70% { opacity: 0; transform: translateX(40vw); }
   71% { opacity: 0; transform: none; }
   82%, 100% { opacity: .6; transform: none; }
 }
 /* The corner turns and runs with him */
 @keyframes fm-chase {
   0%, 14% { opacity: .55; transform: none; }
-  40% { transform: translate(18vw, 0.5vh); }
-  54% { transform: translate(27vw, 0.2vh); }
-  70% { opacity: 0; transform: translate(27vw, 0.2vh); }
+  40% { transform: translate(27vw, 0.5vh); }
+  54% { transform: translate(36vw, 0.2vh); }
+  70% { opacity: 0; transform: translate(36vw, 0.2vh); }
   71% { opacity: 0; transform: none; }
   82%, 100% { opacity: .55; transform: none; }
 }
-/* Snap held, then the throw: up the field to the streaking receiver */
+/* RB checks, then swings out of the backfield */
+@keyframes fm-swing {
+  0%, 12% { opacity: .55; transform: none; }
+  20% { transform: translate(-1vw, 1vh); }
+  40% { transform: translate(5vw, 4vh); }
+  55% { transform: translate(5vw, 4vh); }
+  70% { opacity: 0; transform: translate(5vw, 4vh); }
+  71% { opacity: 0; transform: none; }
+  82%, 100% { opacity: .55; transform: none; }
+}
+/* Free safety reads it and rotates over the top — a step late */
+@keyframes fm-safety {
+  0%, 16% { opacity: .55; transform: none; }
+  40% { transform: translate(14vw, -4vh); }
+  54% { transform: translate(22vw, -7vh); }
+  70% { opacity: 0; transform: translate(22vw, -7vh); }
+  71% { opacity: 0; transform: none; }
+  82%, 100% { opacity: .55; transform: none; }
+}
+/* Snap back to the pocket, held, then the deep shot */
 @keyframes fm-pass {
-  0%, 34% { opacity: .9; transform: none; }
-  42% { transform: translate(15vw, -9vh) scale(1.7) rotate(-10deg); }
-  50% { transform: translate(30vw, -15.5vh) scale(1) rotate(4deg); }
-  56% { transform: translate(30.5vw, -15.5vh) rotate(0deg); }
-  70% { opacity: 0; transform: translate(30.5vw, -15.5vh); }
+  0%, 11% { opacity: .9; transform: none; }
+  15% { transform: translateX(-5.5vw); }
+  34% { transform: translateX(-5.5vw); }
+  42% { transform: translate(12vw, -12vh) scale(1.7) rotate(-10deg); }
+  50% { transform: translate(40vw, -22vh) scale(1) rotate(4deg); }
+  56% { transform: translate(40.3vw, -22vh) rotate(0deg); }
+  70% { opacity: 0; transform: translate(40.3vw, -22vh); }
   71% { opacity: 0; transform: none; }
   82%, 100% { opacity: .9; transform: none; }
 }
