@@ -1,28 +1,14 @@
-import { timingSafeEqual } from "node:crypto";
-
-function equal(left: string, right: string) {
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+// CardVault runs as a single-user personal site: browser sign-in is disabled.
+// The API routes still call webAuthorized() so this stays the single switch —
+// restore a real check here (and a middleware) if the site ever goes multi-user.
+// The internal MCP endpoints are unaffected; they use their own bearer token
+// via lib/internal-auth.
 
 export function webAuthConfigured() {
-  return Boolean(process.env.CARDVAULT_WEB_USERNAME && process.env.CARDVAULT_WEB_PASSWORD);
+  return true;
 }
 
-export function webAuthorized(request: Request) {
-  const username = process.env.CARDVAULT_WEB_USERNAME;
-  const password = process.env.CARDVAULT_WEB_PASSWORD;
-  if (!username || !password) return process.env.NODE_ENV !== "production";
-
-  const header = request.headers.get("authorization");
-  if (!header?.startsWith("Basic ")) return false;
-  try {
-    const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
-    const separator = decoded.indexOf(":");
-    if (separator < 0) return false;
-    return equal(decoded.slice(0, separator), username) && equal(decoded.slice(separator + 1), password);
-  } catch {
-    return false;
-  }
+export function webAuthorized(_request?: Request) {
+  void _request;
+  return true;
 }
